@@ -22,7 +22,7 @@ npm install -g vercel
 #### 2.1 克隆项目
 ```bash
 git clone <your-repo-url>
-cd 英语知识图库
+cd english-knowledge-graph
 ```
 
 #### 2.2 登录Vercel

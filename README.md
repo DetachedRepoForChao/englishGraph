@@ -1,4 +1,4 @@
-# K12英语知识图谱系统
+# K12 English Knowledge Graph System
 
 基于Neo4j图数据库的K12英语题库智能标注与分析系统，实现了从基础知识图谱构建到智能应用的完整流程。
 
@@ -58,7 +58,7 @@
 1. **克隆项目**
 ```bash
 git clone <repository-url>
-cd 英语知识图库
+cd english-knowledge-graph
 ```
 
 2. **安装依赖**
@@ -161,7 +161,7 @@ CREATE INDEX knowledge_point_level IF NOT EXISTS FOR (kp:KnowledgePoint) ON (kp.
 ## 🗂️ 项目结构
 
 ```
-英语知识图库/
+english-knowledge-graph/
 ├── backend/                 # 后端代码
 │   ├── api/                # API路由
 │   │   ├── routes/         # 具体路由实现

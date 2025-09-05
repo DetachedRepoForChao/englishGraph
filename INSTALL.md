@@ -91,10 +91,10 @@ brew services start neo4j   # macOS
 ```bash
 # 克隆项目（如果从Git仓库）
 git clone <repository-url>
-cd 英语知识图库
+cd english-knowledge-graph
 
 # 或者如果是本地项目，直接进入目录
-cd /path/to/英语知识图库
+cd /path/to/english-knowledge-graph
 ```
 
 ### 4. 创建Python虚拟环境

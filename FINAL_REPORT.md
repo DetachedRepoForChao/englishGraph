@@ -270,7 +270,7 @@ curl -X PUT "http://localhost:8000/api/ai-agent/config" \
 ## 🗂️ 项目文件结构
 
 ```
-英语知识图库/
+english-knowledge-graph/
 ├── 📁 backend/                 # 后端服务
 │   ├── api/                   # API接口层
 │   ├── models/                # 数据模型

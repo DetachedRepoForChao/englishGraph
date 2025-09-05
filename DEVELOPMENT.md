@@ -53,7 +53,7 @@ graph TD
 
 ### 📁 项目结构
 ```
-英语知识图库/
+english-knowledge-graph/
 ├── backend/                    # 后端代码
 │   ├── api/                   # API层
 │   │   ├── main.py           # FastAPI主应用
@@ -104,7 +104,7 @@ graph TD
 ```bash
 # 1. 克隆项目
 git clone <repository-url>
-cd 英语知识图库
+cd english-knowledge-graph
 
 # 2. 创建虚拟环境
 python -m venv venv
@@ -1568,7 +1568,7 @@ sudo systemctl start neo4j
 
 # 5. 克隆项目
 git clone <repository-url>
-cd 英语知识图库
+cd english-knowledge-graph
 
 # 6. 创建虚拟环境
 python3.8 -m venv venv
