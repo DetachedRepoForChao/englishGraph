@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析测试页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>K12英语知识图谱 - 数据分析测试</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>AI Agent模型准确率分析</h5>
+                        <button class="btn btn-primary btn-sm" onclick="loadAccuracyAnalysis()">
+                            <i class="fas fa-refresh me-1"></i>刷新数据
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="accuracy-analysis">
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary" onclick="loadAccuracyAnalysis()">
+                                    <i class="fas fa-chart-line me-1"></i>加载AI Agent准确率分析
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>知识点覆盖分析</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="coverage-analysis">
+                            <button class="btn btn-outline-info" onclick="loadCoverageAnalysis()">
+                                <i class="fas fa-chart-pie me-1"></i>加载覆盖分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>题目分布分析</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="distribution-analysis">
+                            <button class="btn btn-outline-success" onclick="loadDistributionAnalysis()">
+                                <i class="fas fa-chart-bar me-1"></i>加载分布分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>所有题目列表</h5>
+                        <button class="btn btn-success btn-sm" onclick="loadAllQuestions()">
+                            <i class="fas fa-list me-1"></i>加载所有题目
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="questions-list">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-question-circle fa-3x mb-3"></i>
+                                <p>点击按钮加载题目列表</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = '/api';
+        
+        // 显示加载状态
+        function showLoading(containerId, message = '加载中...') {
+            document.getElementById(containerId).innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // 显示错误信息
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // 加载AI Agent准确率分析
+        async function loadAccuracyAnalysis() {
+            try {
+                showLoading('accuracy-analysis', '正在分析AI Agent准确率...');
+                
+                const response = await fetch(`${API_BASE_URL}/analytics/ai-agent-accuracy`);
+                const data = await response.json();
+                
+                const accuracy = data.accuracy_analysis || {};
+                const details = accuracy.details || [];
+                
+                const html = `
+                    <div class="alert alert-primary">
+                        <h6><i class="fas fa-robot me-2"></i>AI Agent性能指标</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>准确率:</strong> ${accuracy.accuracy_rate || 0}%
+                            </div>
+                            <div class="col-md-3">
+                                <strong>正确标注:</strong> ${accuracy.correct_annotations || 0}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>总标注数:</strong> ${accuracy.total_annotations || 0}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>覆盖率:</strong> ${data.coverage_rate?.toFixed(1) || 0}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>题目内容</th>
+                                    <th>AI标注</th>
+                                    <th>期望标注</th>
+                                    <th>准确性</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${details.map(detail => `
+                                    <tr>
+                                        <td>${detail.content}</td>
+                                        <td>${detail.annotated_kps.join(', ')}</td>
+                                        <td>${detail.expected_kps.join(', ') || '无'}</td>
+                                        <td>
+                                            ${detail.is_accurate ? 
+                                                '<span class="badge bg-success">✅ 正确</span>' : 
+                                                '<span class="badge bg-danger">❌ 错误</span>'
+                                            }
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById('accuracy-analysis').innerHTML = html;
+                
+            } catch (error) {
+                console.error('加载准确率分析失败:', error);
+                showError('accuracy-analysis', '加载失败，请重试');
+            }
+        }
+        
+        // 加载知识点覆盖分析
+        async function loadCoverageAnalysis() {
+            try {
+                showLoading('coverage-analysis', '正在分析知识点覆盖...');
+                
+                const response = await fetch(`${API_BASE_URL}/analytics/coverage`);
+                const data = await response.json();
+                
+                const coverageData = data.coverage_data || [];
+                const summary = data.summary || {};
+                
+                const html = `
+                    <div class="mb-3">
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" 
+                                 style="width: ${summary.coverage_rate || 0}%">
+                                覆盖率: ${summary.coverage_rate || 0}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${coverageData.map(kp => `
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>${kp.knowledge_point}</strong>
+                                    <br><small class="text-muted">${kp.level || '未设置'}</small>
+                                </div>
+                                <span class="badge ${kp.question_count > 0 ? 'bg-success' : 'bg-secondary'}">
+                                    ${kp.question_count} 题
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('coverage-analysis').innerHTML = html;
+                
+            } catch (error) {
+                console.error('加载覆盖分析失败:', error);
+                showError('coverage-analysis', '加载失败，请重试');
+            }
+        }
+        
+        // 加载分布分析
+        async function loadDistributionAnalysis() {
+            try {
+                showLoading('distribution-analysis', '正在分析题目分布...');
+                
+                const [difficultyResponse, typeResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/analytics/difficulty-distribution`),
+                    fetch(`${API_BASE_URL}/analytics/type-distribution`)
+                ]);
+                
+                const difficultyData = await difficultyResponse.json();
+                const typeData = await typeResponse.json();
+                
+                const html = `
+                    <h6>难度分布:</h6>
+                    ${(difficultyData.difficulty_distribution || []).map(item => `
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>${item.difficulty || '未设置'}</span>
+                                <span>${item.count} 题 (${item.percentage?.toFixed(1) || 0}%)</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" 
+                                     style="width: ${item.percentage || 0}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    <h6 class="mt-4">题目类型分布:</h6>
+                    ${(typeData.type_distribution || []).map(item => `
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>${item.question_type}</span>
+                                <span>${item.count} 题 (${item.percentage?.toFixed(1) || 0}%)</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" 
+                                     style="width: ${item.percentage || 0}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+                
+                document.getElementById('distribution-analysis').innerHTML = html;
+                
+            } catch (error) {
+                console.error('加载分布分析失败:', error);
+                showError('distribution-analysis', '加载失败，请重试');
+            }
+        }
+        
+        // 加载所有题目
+        async function loadAllQuestions() {
+            try {
+                showLoading('questions-list', '正在加载所有题目...');
+                
+                // 获取所有知识点
+                const kpResponse = await fetch(`${API_BASE_URL}/knowledge/search?keyword=`);
+                const kpData = await kpResponse.json();
+                
+                let allQuestions = [];
+                const questionIds = new Set();
+                
+                // 从每个知识点获取题目
+                for (const kp of kpData.results || []) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/questions/by-knowledge/${encodeURIComponent(kp.name)}`);
+                        const data = await response.json();
+                        
+                        for (const item of data.questions || []) {
+                            const question = item.question;
+                            if (!questionIds.has(question.id)) {
+                                questionIds.add(question.id);
+                                allQuestions.push({
+                                    ...question,
+                                    knowledge_points: [kp.name],
+                                    weight: item.weight
+                                });
+                            } else {
+                                const existingQ = allQuestions.find(q => q.id === question.id);
+                                if (existingQ && !existingQ.knowledge_points.includes(kp.name)) {
+                                    existingQ.knowledge_points.push(kp.name);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`获取知识点 ${kp.name} 的题目失败:`, error);
+                    }
+                }
+                
+                // 显示题目
+                const html = `
+                    <div class="alert alert-success mb-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>题目统计</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>总题目数:</strong> ${allQuestions.length}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>已标注:</strong> ${allQuestions.filter(q => q.knowledge_points?.length > 0).length}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>标注覆盖率:</strong> ${allQuestions.length > 0 ? ((allQuestions.filter(q => q.knowledge_points?.length > 0).length / allQuestions.length) * 100).toFixed(1) : 0}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="45%">题目内容</th>
+                                    <th width="10%">类型</th>
+                                    <th width="10%">难度</th>
+                                    <th width="15%">答案</th>
+                                    <th width="15%">关联知识点</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allQuestions.map((question, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>
+                                            <div title="${question.content}">
+                                                ${question.content.length > 80 ? 
+                                                    question.content.substring(0, 80) + '...' : 
+                                                    question.content
+                                                }
+                                            </div>
+                                            ${question.analysis ? 
+                                                `<small class="text-muted">📝 ${question.analysis.substring(0, 60)}...</small>` : 
+                                                ''
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">${question.question_type}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge ${getDifficultyColor(question.difficulty)}">
+                                                ${getDifficultyLabel(question.difficulty)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <code>${question.answer}</code>
+                                        </td>
+                                        <td>
+                                            ${(question.knowledge_points || []).map(kp => 
+                                                `<span class="badge bg-success me-1">${kp}</span>`
+                                            ).join('')}
+                                            ${(!question.knowledge_points || question.knowledge_points.length === 0) ? 
+                                                '<span class="text-muted">未标注</span>' : ''
+                                            }
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById('questions-list').innerHTML = html;
+                
+            } catch (error) {
+                console.error('加载题目失败:', error);
+                showError('questions-list', '加载题目失败，请重试');
+            }
+        }
+        
+        // 工具函数
+        function getDifficultyColor(difficulty) {
+            const colors = {
+                'easy': 'bg-success',
+                'medium': 'bg-warning', 
+                'hard': 'bg-danger'
+            };
+            return colors[difficulty] || 'bg-secondary';
+        }
+        
+        function getDifficultyLabel(difficulty) {
+            const labels = {
+                'easy': '简单',
+                'medium': '中等', 
+                'hard': '困难'
+            };
+            return labels[difficulty] || '未设置';
+        }
+        
+        // 页面加载时自动加载数据
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始加载数据...');
+            loadAccuracyAnalysis();
+            loadCoverageAnalysis();
+            loadDistributionAnalysis();
+        });
+    </script>
+</body>
+</html>

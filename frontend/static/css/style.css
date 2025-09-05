@@ -1,0 +1,285 @@
+/* K12英语知识图谱系统样式 */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* 统计卡片样式 */
+.stat-card {
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-right: 20px;
+    opacity: 0.8;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* 卡片样式增强 */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* 知识点列表样式 */
+.knowledge-point-item {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.knowledge-point-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.knowledge-point-item.selected {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.knowledge-point-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.knowledge-point-meta {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+.knowledge-point-description {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 6px;
+}
+
+/* 知识点推荐样式 */
+.suggestion-item {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+    border-color: #28a745;
+}
+
+.suggestion-confidence {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+}
+
+.confidence-high {
+    background-color: #28a745;
+}
+
+.confidence-medium {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.confidence-low {
+    background-color: #dc3545;
+}
+
+.suggestion-reason {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 6px;
+}
+
+/* 选中的知识点样式 */
+.selected-kp-item {
+    background-color: #e8f5e8;
+    border: 1px solid #28a745;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 4px;
+    display: inline-block;
+    position: relative;
+}
+
+.selected-kp-remove {
+    color: #dc3545;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.selected-kp-remove:hover {
+    color: #c82333;
+}
+
+/* 权重滑块样式 */
+.weight-slider {
+    margin-top: 8px;
+}
+
+.weight-display {
+    font-size: 0.8rem;
+    color: #666;
+    margin-left: 8px;
+}
+
+/* 按钮样式增强 */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 导航标签样式 */
+.nav-tabs .nav-link {
+    border-radius: 8px 8px 0 0;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* 表单样式增强 */
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 加载动画 */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+/* 工具提示样式 */
+.tooltip-inner {
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stat-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+    
+    .card {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+    
+    .card-header {
+        background-color: #3d3d3d;
+        border-bottom-color: #4d4d4d;
+    }
+    
+    .knowledge-point-item {
+        background-color: #2d2d2d;
+        border-color: #4d4d4d;
+        color: #e0e0e0;
+    }
+    
+    .knowledge-point-item:hover {
+        background-color: #3d3d3d;
+    }
+}

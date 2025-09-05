@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K12英语知识图谱系统</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>
+                K12英语知识图谱系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#knowledge-management">知识点管理</a>
+                <a class="nav-link" href="#annotation-tool">题目标注</a>
+                <a class="nav-link" href="#analytics">数据分析</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- 系统概览 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-dashboard me-2"></i>系统概览</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="stat-card bg-primary text-white">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="total-knowledge-points">0</h3>
+                                        <p>知识点总数</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card bg-success text-white">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-question-circle"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="total-questions">0</h3>
+                                        <p>题目总数</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card bg-warning text-white">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="annotated-questions">0</h3>
+                                        <p>已标注题目</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card bg-info text-white">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="annotation-coverage">0%</h3>
+                                        <p>标注覆盖率</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页导航 -->
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="knowledge-tab" data-bs-toggle="tab" data-bs-target="#knowledge-panel" type="button" role="tab">
+                    <i class="fas fa-sitemap me-2"></i>知识点管理
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="annotation-tab" data-bs-toggle="tab" data-bs-target="#annotation-panel" type="button" role="tab">
+                    <i class="fas fa-tags me-2"></i>智能标注
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics-panel" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-2"></i>数据分析
+                </button>
+            </li>
+        </ul>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="mainTabContent">
+            <!-- 知识点管理面板 -->
+            <div class="tab-pane fade show active" id="knowledge-panel" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>知识点搜索</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="knowledge-search" placeholder="搜索知识点...">
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="searchKnowledgePoints()">
+                                    <i class="fas fa-search me-1"></i>搜索
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="showAddKnowledgeModal()">
+                                    <i class="fas fa-plus me-1"></i>添加
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>知识点列表</h6>
+                            </div>
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div id="knowledge-points-list">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>知识点层级结构</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="knowledge-hierarchy" style="height: 500px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 10px;">
+                                    <div class="text-center text-muted mt-5">
+                                        <i class="fas fa-sitemap fa-3x mb-3"></i>
+                                        <p>知识点层级结构图将在这里显示</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能标注面板 -->
+            <div class="tab-pane fade" id="annotation-panel" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>题目信息</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="question-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">题目内容</label>
+                                        <textarea class="form-control" id="question-content" rows="4" placeholder="请输入题目内容..."></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">题目类型</label>
+                                        <select class="form-select" id="question-type">
+                                            <option value="选择题">选择题</option>
+                                            <option value="填空题">填空题</option>
+                                            <option value="阅读理解">阅读理解</option>
+                                            <option value="翻译题">翻译题</option>
+                                            <option value="写作题">写作题</option>
+                                            <option value="听力题">听力题</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">答案</label>
+                                        <input type="text" class="form-control" id="question-answer" placeholder="请输入答案">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="suggestKnowledgePoints()">
+                                        <i class="fas fa-magic me-1"></i>AI智能推荐
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="saveQuestion()">
+                                        <i class="fas fa-save me-1"></i>保存题目
+                                    </button>
+                                    <button type="button" class="btn btn-info" onclick="showSmartImportModal()">
+                                        <i class="fas fa-upload me-1"></i>智能导入
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>知识点推荐</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="knowledge-suggestions">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-lightbulb fa-2x mb-3"></i>
+                                        <p>点击"AI智能推荐"获取知识点建议</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>已选择的知识点</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="selected-knowledge-points">
+                                    <div class="text-muted">暂无选择的知识点</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据分析面板 -->
+            <div class="tab-pane fade" id="analytics-panel" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>数据分析与可视化</h6>
+                                <button class="btn btn-sm btn-primary float-end" onclick="loadAnalyticsData()">
+                                    <i class="fas fa-refresh me-1"></i>刷新数据
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="graph-visualization" style="min-height: 500px;">
+                                    <div class="text-center text-muted mt-5">
+                                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                                        <p>点击上方"刷新数据"按钮加载数据分析</p>
+                                        <button class="btn btn-outline-primary" onclick="loadAnalyticsData()">
+                                            <i class="fas fa-chart-line me-1"></i>加载数据分析
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加知识点模态框 -->
+    <div class="modal fade" id="addKnowledgeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加知识点</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-knowledge-form">
+                        <div class="mb-3">
+                            <label class="form-label">知识点名称</label>
+                            <input type="text" class="form-control" id="new-kp-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" id="new-kp-description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">学段</label>
+                            <select class="form-select" id="new-kp-level">
+                                <option value="小学一年级">小学一年级</option>
+                                <option value="小学二年级">小学二年级</option>
+                                <option value="小学三年级">小学三年级</option>
+                                <option value="小学四年级">小学四年级</option>
+                                <option value="小学五年级">小学五年级</option>
+                                <option value="小学六年级">小学六年级</option>
+                                <option value="初中一年级">初中一年级</option>
+                                <option value="初中二年级">初中二年级</option>
+                                <option value="初中三年级">初中三年级</option>
+                                <option value="高中一年级">高中一年级</option>
+                                <option value="高中二年级">高中二年级</option>
+                                <option value="高中三年级">高中三年级</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">难度</label>
+                            <select class="form-select" id="new-kp-difficulty">
+                                <option value="easy">简单</option>
+                                <option value="medium">中等</option>
+                                <option value="hard">困难</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addKnowledgePoint()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 智能导入模态框 -->
+    <div class="modal fade" id="smartImportModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-robot me-2"></i>AI智能导入题目
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>智能导入功能：</strong>上传JSON格式的题目文件，系统将自动为每道题目进行知识点标注。
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">选择题目文件</label>
+                        <input type="file" class="form-control" id="import-file" accept=".json" onchange="previewImportFile()">
+                        <div class="form-text">支持JSON格式文件，每道题目应包含content、question_type、answer等字段</div>
+                    </div>
+                    
+                    <div id="import-preview" style="display: none;">
+                        <h6>文件预览：</h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                            <pre id="import-content"></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>AI Agent配置：</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">置信度阈值</label>
+                                <input type="range" class="form-range" id="confidence-threshold" min="0.1" max="1.0" step="0.1" value="0.3">
+                                <div class="form-text">当前值: <span id="confidence-value">0.3</span></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">最大自动标注数</label>
+                                <input type="number" class="form-control" id="max-annotations" min="1" max="10" value="5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="smartImportQuestions()" id="import-btn" disabled>
+                        <i class="fas fa-upload me-1"></i>开始智能导入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js?v=2"></script>
+</body>
+</html>

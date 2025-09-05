@@ -1,0 +1,91 @@
+[
+    {
+        "content": "My sister _____ her homework every evening. A) do B) does C) doing D) did",
+        "question_type": "选择题",
+        "options": ["do", "does", "doing", "did"],
+        "answer": "B",
+        "analysis": "主语My sister是第三人称单数，every evening表示经常性动作，用一般现在时does",
+        "source": "AI Agent测试题目",
+        "difficulty": "easy"
+    },
+    {
+        "content": "Look! The birds _____ in the sky. A) fly B) flies C) are flying D) flew",
+        "question_type": "选择题", 
+        "options": ["fly", "flies", "are flying", "flew"],
+        "answer": "C",
+        "analysis": "Look!提示现在正在发生的动作，用现在进行时are flying",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "I _____ to Beijing last summer vacation. A) go B) goes C) went D) will go",
+        "question_type": "选择题",
+        "options": ["go", "goes", "went", "will go"], 
+        "answer": "C",
+        "analysis": "last summer vacation表示过去的时间，用一般过去时went",
+        "source": "AI Agent测试题目",
+        "difficulty": "easy"
+    },
+    {
+        "content": "She has _____ lived in Shanghai for 5 years. A) already B) yet C) just D) never",
+        "question_type": "选择题",
+        "options": ["already", "yet", "just", "never"],
+        "answer": "A", 
+        "analysis": "现在完成时的肯定句中，already表示'已经'，强调动作已经完成",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "The man _____ is wearing a blue shirt is my teacher. A) who B) which C) where D) when",
+        "question_type": "选择题",
+        "options": ["who", "which", "where", "when"],
+        "answer": "A",
+        "analysis": "先行词是人(man)，关系代词用who引导定语从句",
+        "source": "AI Agent测试题目", 
+        "difficulty": "hard"
+    },
+    {
+        "content": "Could you tell me _____ the library is? A) where B) what C) how D) why",
+        "question_type": "选择题",
+        "options": ["where", "what", "how", "why"],
+        "answer": "A",
+        "analysis": "宾语从句询问地点，用where引导",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "The windows _____ by the students yesterday. A) cleaned B) were cleaned C) are cleaned D) clean",
+        "question_type": "选择题",
+        "options": ["cleaned", "were cleaned", "are cleaned", "clean"],
+        "answer": "B",
+        "analysis": "主语windows是动作的承受者，用被动语态，yesterday表示过去时间",
+        "source": "AI Agent测试题目",
+        "difficulty": "hard"
+    },
+    {
+        "content": "This apple is _____ than that one. A) sweet B) sweeter C) sweetest D) the sweetest", 
+        "question_type": "选择题",
+        "options": ["sweet", "sweeter", "sweetest", "the sweetest"],
+        "answer": "B",
+        "analysis": "两者比较用比较级sweeter",
+        "source": "AI Agent测试题目",
+        "difficulty": "easy"
+    },
+    {
+        "content": "Fill in the blank: I'm good _____ playing basketball.",
+        "question_type": "填空题",
+        "answer": "at",
+        "analysis": "be good at是固定搭配，表示'擅长于'",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "If it _____ tomorrow, we will stay at home. A) rain B) rains C) will rain D) rained",
+        "question_type": "选择题",
+        "options": ["rain", "rains", "will rain", "rained"],
+        "answer": "B", 
+        "analysis": "if引导的条件句，从句用一般现在时，主句用将来时",
+        "source": "AI Agent测试题目",
+        "difficulty": "hard"
+    }
+]

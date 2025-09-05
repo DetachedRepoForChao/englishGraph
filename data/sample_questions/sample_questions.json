@@ -1,0 +1,100 @@
+[
+    {
+        "content": "She _____ to school every day. A) go B) goes C) going D) gone",
+        "question_type": "选择题",
+        "options": ["go", "goes", "going", "gone"],
+        "answer": "B",
+        "analysis": "主语She是第三人称单数，动词需要用第三人称单数形式goes",
+        "source": "人教版小学英语",
+        "difficulty": "easy",
+        "knowledge_points": ["一般现在时", "动词时态"]
+    },
+    {
+        "content": "Yesterday I _____ to the park with my friends. A) go B) went C) going D) will go",
+        "question_type": "选择题", 
+        "options": ["go", "went", "going", "will go"],
+        "answer": "B",
+        "analysis": "Yesterday表示过去的时间，需要用一般过去时went",
+        "source": "人教版小学英语",
+        "difficulty": "easy",
+        "knowledge_points": ["一般过去时", "动词时态"]
+    },
+    {
+        "content": "Look! The children _____ in the playground. A) play B) plays C) are playing D) played",
+        "question_type": "选择题",
+        "options": ["play", "plays", "are playing", "played"], 
+        "answer": "C",
+        "analysis": "Look!表示现在正在发生的动作，用现在进行时are playing",
+        "source": "人教版小学英语",
+        "difficulty": "medium",
+        "knowledge_points": ["现在进行时", "动词时态"]
+    },
+    {
+        "content": "I have _____ finished my homework. A) already B) yet C) just D) ever",
+        "question_type": "选择题",
+        "options": ["already", "yet", "just", "ever"],
+        "answer": "A",
+        "analysis": "现在完成时的肯定句中，already表示'已经'",
+        "source": "人教版初中英语",
+        "difficulty": "medium",
+        "knowledge_points": ["现在完成时", "动词时态"]
+    },
+    {
+        "content": "The book _____ is on the table belongs to me. A) who B) which C) where D) when",
+        "question_type": "选择题",
+        "options": ["who", "which", "where", "when"],
+        "answer": "B",
+        "analysis": "先行词是物(book)，关系代词用which",
+        "source": "人教版初中英语", 
+        "difficulty": "hard",
+        "knowledge_points": ["定语从句", "关系代词"]
+    },
+    {
+        "content": "Can you tell me _____ the nearest hospital is? A) where B) what C) how D) why",
+        "question_type": "选择题",
+        "options": ["where", "what", "how", "why"],
+        "answer": "A",
+        "analysis": "宾语从句询问地点，用where引导",
+        "source": "人教版初中英语",
+        "difficulty": "medium",
+        "knowledge_points": ["宾语从句", "疑问词"]
+    },
+    {
+        "content": "The letter _____ by Tom yesterday. A) wrote B) was written C) is written D) writes",
+        "question_type": "选择题",
+        "options": ["wrote", "was written", "is written", "writes"],
+        "answer": "B", 
+        "analysis": "主语letter是动作的承受者，用被动语态，时间是yesterday用过去时",
+        "source": "人教版初中英语",
+        "difficulty": "hard",
+        "knowledge_points": ["被动语态", "一般过去时"]
+    },
+    {
+        "content": "This book is _____ than that one. A) good B) better C) best D) the best",
+        "question_type": "选择题",
+        "options": ["good", "better", "best", "the best"],
+        "answer": "B",
+        "analysis": "两者比较用比较级better",
+        "source": "人教版小学英语",
+        "difficulty": "easy",
+        "knowledge_points": ["比较级和最高级", "形容词"]
+    },
+    {
+        "content": "Fill in the blank: I am interested _____ learning English.",
+        "question_type": "填空题",
+        "answer": "in",
+        "analysis": "be interested in是固定搭配，表示'对...感兴趣'",
+        "source": "人教版初中英语",
+        "difficulty": "medium",
+        "knowledge_points": ["介词", "固定搭配"]
+    },
+    {
+        "content": "Translate: 如果我有时间，我会帮助你。",
+        "question_type": "翻译题",
+        "answer": "If I have time, I will help you.",
+        "analysis": "if引导的条件句，主句用将来时，从句用一般现在时",
+        "source": "人教版初中英语",
+        "difficulty": "hard",
+        "knowledge_points": ["条件句", "虚拟语气", "一般现在时"]
+    }
+]

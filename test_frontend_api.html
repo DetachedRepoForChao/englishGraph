@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .result { background: #f8f9fa; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 API测试页面</h1>
+    
+    <div class="test-section">
+        <h3>测试知识点推荐API</h3>
+        <textarea id="question-content" placeholder="输入题目内容" rows="3">I have already finished my homework.</textarea>
+        <select id="question-type">
+            <option value="选择题">选择题</option>
+            <option value="填空题">填空题</option>
+            <option value="问答题">问答题</option>
+        </select>
+        <button onclick="testSuggestAPI()">测试推荐API</button>
+        <div id="suggest-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试AI Agent API</h3>
+        <button onclick="testAIAgentAPI()">测试AI Agent API</button>
+        <div id="ai-agent-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testSuggestAPI() {
+            const content = document.getElementById('question-content').value.trim();
+            const type = document.getElementById('question-type').value;
+            const resultDiv = document.getElementById('suggest-result');
+            
+            if (!content) {
+                resultDiv.innerHTML = '<p style="color: red;">请输入题目内容</p>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = '<p>🔄 正在调用API...</p>';
+                
+                const response = await fetch(`/api/annotation/suggest?t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        question_content: content,
+                        question_type: type
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('API返回数据:', data);
+                
+                let html = '<h4>📊 推荐结果:</h4>';
+                data.suggestions.forEach((suggestion, index) => {
+                    html += `
+                        <div style="border: 1px solid #ccc; margin: 10px 0; padding: 10px;">
+                            <strong>${index + 1}. ${suggestion.knowledge_point_name}</strong>
+                            <span style="color: blue; margin-left: 10px;">置信度: ${(suggestion.confidence * 100).toFixed(1)}%</span>
+                            <p>理由: ${suggestion.reason}</p>
+                            ${suggestion.matched_keywords && suggestion.matched_keywords.length > 0 ? 
+                                `<p>匹配关键词: ${suggestion.matched_keywords.join(', ')}</p>` : ''
+                            }
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                console.error('API调用失败:', error);
+                resultDiv.innerHTML = `<p style="color: red;">API调用失败: ${error.message}</p>`;
+            }
+        }
+        
+        async function testAIAgentAPI() {
+            const resultDiv = document.getElementById('ai-agent-result');
+            
+            try {
+                resultDiv.innerHTML = '<p>🔄 正在调用AI Agent API...</p>';
+                
+                const response = await fetch(`/api/ai-agent/auto-annotate?t=${Date.now()}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        question: {
+                            content: "I have already finished my homework.",
+                            question_type: "选择题",
+                            answer: "already"
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('AI Agent返回数据:', data);
+                
+                let html = '<h4>🤖 AI Agent结果:</h4>';
+                html += `<p><strong>题目:</strong> ${data.question_content}</p>`;
+                html += `<p><strong>应用标注数:</strong> ${data.applied_count}</p>`;
+                html += '<h5>自动标注建议:</h5>';
+                
+                data.auto_annotations.forEach((annotation, index) => {
+                    html += `
+                        <div style="border: 1px solid #ccc; margin: 10px 0; padding: 10px;">
+                            <strong>${index + 1}. ${annotation.knowledge_point_name}</strong>
+                            <span style="color: blue; margin-left: 10px;">置信度: ${(annotation.confidence * 100).toFixed(1)}%</span>
+                            <span style="color: green; margin-left: 10px;">决策分数: ${annotation.decision_score.toFixed(3)}</span>
+                            <p>理由: ${annotation.reason}</p>
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                console.error('AI Agent API调用失败:', error);
+                resultDiv.innerHTML = `<p style="color: red;">AI Agent API调用失败: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

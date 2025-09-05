@@ -1,0 +1,45 @@
+[
+    {
+        "content": "Tom _____ basketball every weekend. A) play B) plays C) playing D) played",
+        "question_type": "选择题",
+        "options": ["play", "plays", "playing", "played"],
+        "answer": "B",
+        "analysis": "主语Tom是第三人称单数，every weekend表示经常性动作，用一般现在时，动词用第三人称单数形式plays",
+        "source": "AI Agent测试题目",
+        "difficulty": "easy"
+    },
+    {
+        "content": "The students _____ their homework now. A) do B) does C) are doing D) did",
+        "question_type": "选择题",
+        "options": ["do", "does", "are doing", "did"],
+        "answer": "C",
+        "analysis": "now表示现在正在进行的动作，用现在进行时are doing",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "Fill in the blank: She has _____ finished her work.",
+        "question_type": "填空题",
+        "answer": "already",
+        "analysis": "现在完成时的肯定句中，already表示'已经'，通常放在助动词和过去分词之间",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    },
+    {
+        "content": "The book _____ I borrowed from the library is very interesting. A) who B) which C) where D) when",
+        "question_type": "选择题",
+        "options": ["who", "which", "where", "when"],
+        "answer": "B",
+        "analysis": "先行词是物(book)，关系代词用which引导定语从句",
+        "source": "AI Agent测试题目",
+        "difficulty": "hard"
+    },
+    {
+        "content": "Translate the sentence: 这本书比那本书更有趣。",
+        "question_type": "翻译题",
+        "answer": "This book is more interesting than that one.",
+        "analysis": "比较级句型，interesting是多音节形容词，用more + 形容词原形构成比较级",
+        "source": "AI Agent测试题目",
+        "difficulty": "medium"
+    }
+]
