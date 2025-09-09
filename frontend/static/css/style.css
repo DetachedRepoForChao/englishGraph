@@ -283,3 +283,89 @@ body {
         background-color: #3d3d3d;
     }
 }
+
+/* 增强的知识点推荐样式 */
+.suggestion-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+}
+
+.suggestion-item:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+}
+
+/* 特征分析样式 */
+.feature-analysis {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 8px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+}
+
+.feature-category {
+    font-weight: 600;
+    color: #495057;
+    min-width: 80px;
+}
+
+.feature-words {
+    color: #6c757d;
+    margin-right: 8px;
+}
+
+/* 学习目标样式 */
+.learning-objectives {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.85rem;
+}
+
+.learning-objectives li {
+    margin-bottom: 2px;
+    color: #6c757d;
+}
+
+/* 协作推荐特殊样式 */
+.collaborative-suggestion {
+    border: 2px solid #ffc107;
+    background: linear-gradient(135deg, #fff3cd 0%, #fff 100%);
+}
+
+.collaborative-suggestion:hover {
+    border-color: #ffb302;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+/* 年级和关键词标签优化 */
+.badge.bg-info {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.badge.bg-primary {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+.badge.bg-warning {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    font-weight: 600;
+}

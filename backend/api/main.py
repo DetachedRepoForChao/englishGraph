@@ -57,11 +57,14 @@ async def startup_event():
     """应用启动事件"""
     logger.info("启动K12英语知识图谱系统...")
     
-    # 连接数据库
-    if neo4j_service.connect():
-        logger.info("数据库连接成功")
-    else:
-        logger.error("数据库连接失败")
+    # 在Vercel环境中延迟连接数据库
+    try:
+        if neo4j_service.connect():
+            logger.info("数据库连接成功")
+        else:
+            logger.warning("数据库连接失败，将在首次API调用时重试")
+    except Exception as e:
+        logger.warning(f"启动时数据库连接异常: {e}，将在首次API调用时重试")
 
 
 @app.on_event("shutdown")
@@ -136,6 +139,51 @@ async def test_database():
     except Exception as e:
         logger.error(f"Database test failed: {e}")
         return {"error": str(e), "status": "failed"}
+
+@app.get("/debug-analytics")
+async def debug_analytics():
+    """调试analytics服务"""
+    try:
+        from backend.services.analytics_service import analytics_service
+        
+        # 检查数据库连接状态
+        db_connected = neo4j_service.driver is not None
+        if not db_connected:
+            db_connected = neo4j_service.connect()
+        
+        # 直接查询数据库验证
+        direct_stats = {}
+        if db_connected and neo4j_service.driver:
+            with neo4j_service.driver.session() as session:
+                kp_result = session.run("MATCH (kp:KnowledgePoint) RETURN count(kp) as count")
+                q_result = session.run("MATCH (q:Question) RETURN count(q) as count")
+                rel_result = session.run("MATCH ()-[r:TESTS]->() RETURN count(r) as count")
+                
+                direct_stats = {
+                    "knowledge_points": kp_result.single()["count"],
+                    "questions": q_result.single()["count"],
+                    "relationships": rel_result.single()["count"]
+                }
+        
+        # 测试analytics服务
+        coverage = analytics_service.get_knowledge_coverage_analysis()
+        difficulty = analytics_service.get_difficulty_distribution()
+        
+        return {
+            "database_connected": db_connected,
+            "direct_query_stats": direct_stats,
+            "coverage_raw": coverage,
+            "difficulty_raw": difficulty,
+            "coverage_summary": coverage.get("summary", {}),
+            "difficulty_total": difficulty.get("total_questions", 0)
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e), 
+            "traceback": traceback.format_exc(),
+            "error_type": str(e.__class__.__name__)
+        }
 
 
 # 包含其他路由

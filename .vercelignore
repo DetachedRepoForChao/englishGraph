@@ -61,4 +61,11 @@ backend/services/nlp_service.py
 backend/services/wordnet_enhancer.py
 backend/services/simple_word_enhancer.py
 
+# Debugging and sync scripts
+sync_to_cloud.py
+test_cloud_connection.py
+direct_init_aura.py
+init_cloud_database.py
+init_via_api.py
+
 # Keep only essential files for deployment

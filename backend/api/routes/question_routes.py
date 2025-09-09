@@ -9,6 +9,46 @@ from backend.models.schema import Question
 router = APIRouter()
 
 
+@router.get("/")
+async def get_all_questions():
+    """获取所有题目"""
+    try:
+        # 确保数据库连接
+        if not neo4j_service.driver:
+            if not neo4j_service.connect():
+                raise HTTPException(status_code=500, detail="数据库连接失败")
+        
+        with neo4j_service.driver.session() as session:
+            result = session.run("""
+                MATCH (q:Question)
+                OPTIONAL MATCH (q)-[r:TESTS]->(kp:KnowledgePoint)
+                RETURN q.id as id, q.content as content, q.question_type as question_type,
+                       q.options as options, q.answer as answer, q.analysis as analysis,
+                       q.difficulty as difficulty, q.source as source,
+                       collect(kp.name) as knowledge_points
+                ORDER BY q.id
+            """)
+            
+            questions = []
+            for record in result:
+                question_data = {
+                    "id": record["id"],
+                    "content": record["content"],
+                    "question_type": record["question_type"],
+                    "options": record["options"] or [],
+                    "answer": record["answer"],
+                    "analysis": record["analysis"],
+                    "difficulty": record["difficulty"],
+                    "source": record["source"],
+                    "knowledge_points": [kp for kp in record["knowledge_points"] if kp]
+                }
+                questions.append(question_data)
+        
+        return {"questions": questions, "count": len(questions)}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取题目失败: {str(e)}")
+
 @router.post("/", response_model=Dict[str, str])
 async def create_question(question: Question):
     """创建题目"""

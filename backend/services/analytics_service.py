@@ -18,9 +18,21 @@ class AnalyticsService:
     def __init__(self):
         pass
     
+    def _ensure_db_connection(self):
+        """确保数据库连接可用"""
+        if not neo4j_service.driver:
+            if not neo4j_service.connect():
+                logger.error("无法连接到数据库")
+                return False
+        return True
+    
     def get_knowledge_coverage_analysis(self) -> Dict[str, Any]:
         """获取知识点覆盖分析"""
         try:
+            # 确保数据库连接
+            if not self._ensure_db_connection():
+                return {"coverage_data": [], "summary": {}}
+            
             with neo4j_service.driver.session() as session:
                 # 统计每个知识点对应的题目数量
                 result = session.run("""
@@ -69,6 +81,10 @@ class AnalyticsService:
     def get_difficulty_distribution(self) -> Dict[str, Any]:
         """获取题目难度分布"""
         try:
+            # 确保数据库连接
+            if not self._ensure_db_connection():
+                return {"difficulty_distribution": [], "total_questions": 0}
+            
             with neo4j_service.driver.session() as session:
                 # 统计各难度级别的题目数量
                 result = session.run("""

@@ -45,6 +45,29 @@ async def suggest_knowledge_points(request: AnnotationRequest) -> Dict[str, Any]
         raise HTTPException(status_code=500, detail=f"建议生成失败: {str(e)}")
 
 
+@router.post("/collaborative-suggest")
+async def collaborative_suggest_knowledge_points(request: AnnotationRequest):
+    """协作标注推荐 (AI Agent + LabelLLM + MEGAnno)"""
+    try:
+        # 导入协作标注服务
+        from backend.services.collaborative_annotation_service import collaborative_annotation_service
+        
+        result = await collaborative_annotation_service.enhanced_annotation(
+            request.question_content,
+            request.question_type
+        )
+        
+        return {
+            "suggestions": result.get("suggestions", []),
+            "collaboration_summary": result.get("collaboration_summary", {}),
+            "count": len(result.get("suggestions", [])),
+            "message": "协作标注推荐生成成功",
+            "models_used": ["AI_Agent", "LabelLLM", "MEGAnno"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"协作推荐失败: {str(e)}")
+
+
 @router.post("/submit")
 async def submit_annotation(
     question_id: str, 

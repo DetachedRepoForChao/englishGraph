@@ -240,6 +240,59 @@ async function suggestKnowledgePoints() {
     }
 }
 
+// 协作推荐知识点 (AI Agent + LabelLLM + MEGAnno)
+async function collaborativeSuggest() {
+    const content = document.getElementById('question-content').value.trim();
+    const type = document.getElementById('question-type').value;
+    
+    if (!content) {
+        showMessage('请先输入题目内容', 'warning');
+        return;
+    }
+    
+    try {
+        showLoading('knowledge-suggestions', '正在进行协作分析...');
+        console.log('🤝 开始协作推荐，题目内容:', content);
+        
+        const response = await fetch(`${API_BASE_URL}/annotation/collaborative-suggest?t=${Date.now()}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            },
+            body: JSON.stringify({
+                question_content: content,
+                question_type: type
+            })
+        });
+        
+        const data = await response.json();
+        console.log('🎯 协作推荐返回数据:', data);
+        
+        // 显示协作推荐结果，添加特殊标识
+        const enhancedSuggestions = data.suggestions.map(s => ({
+            ...s,
+            isCollaborative: true,
+            models_used: data.models_used || ["AI_Agent", "LabelLLM", "MEGAnno"]
+        }));
+        
+        displayKnowledgeSuggestions(enhancedSuggestions);
+        
+        // 显示协作总结信息
+        if (data.collaboration_summary) {
+            const summary = data.collaboration_summary;
+            showMessage(
+                `协作推荐完成！AI Agent: ${summary.ai_agent_count}, LabelLLM: ${summary.labelllm_count}, MEGAnno验证: ${summary.meganno_validated}`, 
+                'info'
+            );
+        }
+        
+    } catch (error) {
+        console.error('协作推荐失败:', error);
+        showError('knowledge-suggestions', '协作推荐失败，请重试');
+    }
+}
+
 // 显示知识点推荐
 function displayKnowledgeSuggestions(suggestions) {
     const container = document.getElementById('knowledge-suggestions');
@@ -256,21 +309,53 @@ function displayKnowledgeSuggestions(suggestions) {
     }
     
     const html = suggestions.map(suggestion => `
-        <div class="suggestion-item" onclick="addSuggestedKnowledgePoint('${suggestion.knowledge_point_id}', '${suggestion.knowledge_point_name}', ${suggestion.confidence})">
+        <div class="suggestion-item ${suggestion.isCollaborative ? 'collaborative-suggestion' : ''}" onclick="addSuggestedKnowledgePoint('${suggestion.knowledge_point_id}', '${suggestion.knowledge_point_name}', ${suggestion.confidence})">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <strong>${suggestion.knowledge_point_name}</strong>
                     <span class="suggestion-confidence ${getConfidenceClass(suggestion.confidence)}">
                         ${(suggestion.confidence * 100).toFixed(0)}%
                     </span>
+                    ${suggestion.isCollaborative ? 
+                        `<span class="badge bg-gradient bg-warning text-dark ms-1">
+                            <i class="fas fa-users me-1"></i>协作推荐
+                        </span>` : ''
+                    }
+                    ${suggestion.grade_levels && suggestion.grade_levels.length > 0 ? 
+                        `<div class="mt-1">
+                            ${suggestion.grade_levels.map(grade => `<span class="badge bg-info text-white me-1">${grade}</span>`).join('')}
+                        </div>` : ''
+                    }
                 </div>
                 <i class="fas fa-plus text-success"></i>
             </div>
-            <div class="suggestion-reason">${suggestion.reason}</div>
+            <div class="suggestion-reason mt-2">${suggestion.reason}</div>
             ${suggestion.matched_keywords && suggestion.matched_keywords.length > 0 ? 
                 `<div class="mt-2">
-                    <small class="text-muted">匹配关键词: </small>
-                    ${suggestion.matched_keywords.map(kw => `<span class="badge bg-light text-dark">${kw}</span>`).join(' ')}
+                    <small class="text-muted">判断关键词: </small>
+                    ${suggestion.matched_keywords.map(kw => `<span class="badge bg-primary text-white me-1">${kw}</span>`).join('')}
+                </div>` : ''
+            }
+            ${suggestion.feature_analysis ? 
+                `<div class="mt-2">
+                    <small class="text-muted">特征分析: </small>
+                    <div class="feature-analysis">
+                        ${Object.entries(suggestion.feature_analysis).map(([category, info]) => 
+                            `<div class="feature-item">
+                                <span class="feature-category">${category}:</span> 
+                                <span class="feature-words">${info.words.join(', ')}</span>
+                                <span class="badge bg-success ms-1">${(info.score * 100).toFixed(0)}%</span>
+                            </div>`
+                        ).join('')}
+                    </div>
+                </div>` : ''
+            }
+            ${suggestion.learning_objectives && suggestion.learning_objectives.length > 0 ? 
+                `<div class="mt-2">
+                    <small class="text-muted">学习目标: </small>
+                    <ul class="learning-objectives">
+                        ${suggestion.learning_objectives.map(obj => `<li>${obj}</li>`).join('')}
+                    </ul>
                 </div>` : ''
             }
         </div>
@@ -823,40 +908,20 @@ async function loadAllQuestions() {
     try {
         showLoading('all-questions-list', '正在加载所有题目...');
         
-        // 获取所有知识点的题目
-        const allKnowledgePoints = await fetch(`${API_BASE_URL}/knowledge/search?keyword=`);
-        const kpData = await allKnowledgePoints.json();
-        
-        let allQuestions = [];
-        const questionIds = new Set(); // 去重
-        
-        // 从每个知识点获取题目
-        for (const kp of kpData.results || []) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/questions/by-knowledge/${encodeURIComponent(kp.name)}`);
-                const data = await response.json();
-                
-                for (const item of data.questions || []) {
-                    const question = item.question;
-                    if (!questionIds.has(question.id)) {
-                        questionIds.add(question.id);
-                        allQuestions.push({
-                            ...question,
-                            knowledge_points: [kp.name],
-                            weight: item.weight
-                        });
-                    } else {
-                        // 如果题目已存在，添加知识点
-                        const existingQ = allQuestions.find(q => q.id === question.id);
-                        if (existingQ && !existingQ.knowledge_points.includes(kp.name)) {
-                            existingQ.knowledge_points.push(kp.name);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.warn(`获取知识点 ${kp.name} 的题目失败:`, error);
-            }
+        // 直接从题目API获取所有题目
+        const response = await fetch(`${API_BASE_URL}/questions/`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        console.log('题目数据:', data);
+        console.log('题目数量:', data.count);
+        console.log('题目列表:', data.questions);
+        
+        const allQuestions = data.questions || [];
+        console.log('处理后的题目列表:', allQuestions);
+        console.log('题目列表长度:', allQuestions.length);
         
         displayAllQuestions(allQuestions);
         
@@ -868,13 +933,20 @@ async function loadAllQuestions() {
 
 // 显示所有题目
 function displayAllQuestions(questions) {
+    console.log('displayAllQuestions被调用，参数:', questions);
+    console.log('参数类型:', typeof questions);
+    console.log('是否为数组:', Array.isArray(questions));
+    console.log('长度:', questions ? questions.length : 'undefined');
+    
     const container = document.getElementById('all-questions-list');
     
     if (!questions || questions.length === 0) {
+        console.log('显示空状态，原因: questions为空或长度为0');
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-question-circle"></i>
                 <p>暂无题目数据</p>
+                <p class="text-muted">调试信息: questions=${questions}, length=${questions ? questions.length : 'undefined'}</p>
             </div>
         `;
         return;
@@ -929,19 +1001,23 @@ function displayAllQuestions(questions) {
                         <tr>
                             <td>${index + 1}</td>
                             <td>
-                                <div class="question-content" title="${question.content}">
-                                    ${question.content.length > 60 ? 
-                                        question.content.substring(0, 60) + '...' : 
-                                        question.content
+                                <div class="question-content" title="${question.content || ''}">
+                                    ${(question.content || '').length > 60 ? 
+                                        (question.content || '').substring(0, 60) + '...' : 
+                                        (question.content || '')
                                     }
                                 </div>
+                                ${question.options && question.options.length > 0 ? 
+                                    `<div class="mt-1"><small class="text-info">选项: ${question.options.join(', ')}</small></div>` : 
+                                    ''
+                                }
                                 ${question.analysis ? 
                                     `<small class="text-muted">解析: ${question.analysis.substring(0, 50)}...</small>` : 
                                     ''
                                 }
                             </td>
                             <td>
-                                <span class="badge bg-primary">${question.question_type}</span>
+                                <span class="badge bg-primary">${question.question_type || '未知'}</span>
                             </td>
                             <td>
                                 <span class="badge bg-${getDifficultyColor(question.difficulty)}">
@@ -949,7 +1025,7 @@ function displayAllQuestions(questions) {
                                 </span>
                             </td>
                             <td>
-                                <code>${question.answer}</code>
+                                <code>${question.answer || '未设置'}</code>
                             </td>
                             <td>
                                 ${(question.knowledge_points || []).map(kp => 

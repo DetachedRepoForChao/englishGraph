@@ -3,13 +3,10 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+      "use": "@vercel/python"
     },
     {
-      "src": "frontend/templates/**",
+      "src": "frontend/templates/index.html",
       "use": "@vercel/static"
     },
     {
@@ -20,15 +17,23 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/health",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/test-db",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/test-env",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/debug-analytics",
+      "dest": "/api/index.py"
     },
     {
       "src": "/static/(.*)",
