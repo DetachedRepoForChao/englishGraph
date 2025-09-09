@@ -1,0 +1,200 @@
+// Neo4j AuraDB 手动初始化脚本
+// 请在Neo4j Browser中逐步执行以下命令
+
+// 1. 清空数据库（如果需要）
+MATCH (n) DETACH DELETE n;
+
+// 2. 创建约束
+CREATE CONSTRAINT knowledge_point_id IF NOT EXISTS FOR (kp:KnowledgePoint) REQUIRE kp.id IS UNIQUE;
+CREATE CONSTRAINT question_id IF NOT EXISTS FOR (q:Question) REQUIRE q.id IS UNIQUE;
+
+// 3. 创建知识点
+CREATE (kp1:KnowledgePoint {
+    id: 'kp_general_present',
+    name: '一般现在时',
+    description: '表示经常性、习惯性的动作或状态',
+    level: '小学四年级',
+    difficulty: 'easy',
+    keywords: ['always', 'usually', 'every day', '第三人称单数']
+});
+
+CREATE (kp2:KnowledgePoint {
+    id: 'kp_general_past',
+    name: '一般过去时',
+    description: '表示过去发生的动作或状态',
+    level: '小学五年级',
+    difficulty: 'easy',
+    keywords: ['yesterday', 'last week', 'ago', '过去式']
+});
+
+CREATE (kp3:KnowledgePoint {
+    id: 'kp_present_continuous',
+    name: '现在进行时',
+    description: '表示现在正在进行的动作',
+    level: '小学六年级',
+    difficulty: 'medium',
+    keywords: ['now', 'at present', 'be doing', '正在']
+});
+
+CREATE (kp4:KnowledgePoint {
+    id: 'kp_present_perfect',
+    name: '现在完成时',
+    description: '表示过去发生的动作对现在造成的影响',
+    level: '初中一年级',
+    difficulty: 'medium',
+    keywords: ['have done', 'already', 'yet', 'since']
+});
+
+CREATE (kp5:KnowledgePoint {
+    id: 'kp_passive_voice',
+    name: '被动语态',
+    description: '表示动作的承受者作为主语',
+    level: '初中二年级',
+    difficulty: 'hard',
+    keywords: ['be done', 'by', '被动', '过去分词']
+});
+
+CREATE (kp6:KnowledgePoint {
+    id: 'kp_attributive_clause',
+    name: '定语从句',
+    description: '修饰名词或代词的从句',
+    level: '初中三年级',
+    difficulty: 'hard',
+    keywords: ['who', 'which', 'that', '关系代词']
+});
+
+CREATE (kp7:KnowledgePoint {
+    id: 'kp_object_clause',
+    name: '宾语从句',
+    description: '作宾语的从句',
+    level: '初中三年级',
+    difficulty: 'hard',
+    keywords: ['that', 'what', 'if', 'whether']
+});
+
+CREATE (kp8:KnowledgePoint {
+    id: 'kp_comparison',
+    name: '比较级和最高级',
+    description: '形容词和副词的比较形式',
+    level: '小学六年级',
+    difficulty: 'medium',
+    keywords: ['than', 'more', 'most', 'er', 'est']
+});
+
+CREATE (kp9:KnowledgePoint {
+    id: 'kp_prepositions',
+    name: '介词',
+    description: '表示名词、代词等与其他词的关系',
+    level: '小学三年级',
+    difficulty: 'easy',
+    keywords: ['in', 'on', 'at', 'for', 'with']
+});
+
+CREATE (kp10:KnowledgePoint {
+    id: 'kp_verb_tenses',
+    name: '动词时态',
+    description: '动词的时间和状态变化',
+    level: '小学四年级',
+    difficulty: 'medium',
+    keywords: ['时态', 'tense', '动词变化']
+});
+
+// 4. 创建题目
+CREATE (q1:Question {
+    id: 'q_present_simple_1',
+    content: 'She _____ to school every day.',
+    question_type: '选择题',
+    options: ['go', 'goes', 'going', 'gone'],
+    answer: 'B',
+    analysis: '主语是第三人称单数，动词用goes',
+    difficulty: 'easy',
+    source: '教材示例'
+});
+
+CREATE (q2:Question {
+    id: 'q_past_simple_1',
+    content: 'Yesterday I _____ to the park.',
+    question_type: '选择题',
+    options: ['go', 'goes', 'went', 'going'],
+    answer: 'C',
+    analysis: 'yesterday表示过去时间，用过去式went',
+    difficulty: 'easy',
+    source: '教材示例'
+});
+
+CREATE (q3:Question {
+    id: 'q_present_continuous_1',
+    content: 'Look! The children _____ in the playground.',
+    question_type: '选择题',
+    options: ['play', 'plays', 'are playing', 'played'],
+    answer: 'C',
+    analysis: 'Look!表示正在发生，用现在进行时',
+    difficulty: 'medium',
+    source: '教材示例'
+});
+
+CREATE (q4:Question {
+    id: 'q_present_perfect_1',
+    content: 'I _____ already _____ my homework.',
+    question_type: '选择题',
+    options: ['have, finished', 'has, finished', 'had, finished', 'will, finish'],
+    answer: 'A',
+    analysis: 'already是现在完成时的标志词',
+    difficulty: 'medium',
+    source: '教材示例'
+});
+
+CREATE (q5:Question {
+    id: 'q_passive_voice_1',
+    content: 'The letter _____ by Tom yesterday.',
+    question_type: '选择题',
+    options: ['wrote', 'was written', 'is written', 'writes'],
+    answer: 'B',
+    analysis: 'by表示被动语态，yesterday表示过去时',
+    difficulty: 'hard',
+    source: '教材示例'
+});
+
+CREATE (q6:Question {
+    id: 'q_comparison_1',
+    content: 'This apple is _____ than that one.',
+    question_type: '选择题',
+    options: ['sweet', 'sweeter', 'sweetest', 'more sweet'],
+    answer: 'B',
+    analysis: 'than表示比较，用比较级sweeter',
+    difficulty: 'medium',
+    source: '教材示例'
+});
+
+// 5. 创建题目-知识点关系
+MATCH (q1:Question {id: 'q_present_simple_1'})
+MATCH (kp1:KnowledgePoint {id: 'kp_general_present'})
+CREATE (q1)-[:TESTS {weight: 0.8}]->(kp1);
+
+MATCH (q2:Question {id: 'q_past_simple_1'})
+MATCH (kp2:KnowledgePoint {id: 'kp_general_past'})
+CREATE (q2)-[:TESTS {weight: 0.8}]->(kp2);
+
+MATCH (q3:Question {id: 'q_present_continuous_1'})
+MATCH (kp3:KnowledgePoint {id: 'kp_present_continuous'})
+CREATE (q3)-[:TESTS {weight: 0.8}]->(kp3);
+
+MATCH (q4:Question {id: 'q_present_perfect_1'})
+MATCH (kp4:KnowledgePoint {id: 'kp_present_perfect'})
+CREATE (q4)-[:TESTS {weight: 0.8}]->(kp4);
+
+MATCH (q5:Question {id: 'q_passive_voice_1'})
+MATCH (kp5:KnowledgePoint {id: 'kp_passive_voice'})
+CREATE (q5)-[:TESTS {weight: 0.8}]->(kp5);
+
+MATCH (q6:Question {id: 'q_comparison_1'})
+MATCH (kp8:KnowledgePoint {id: 'kp_comparison'})
+CREATE (q6)-[:TESTS {weight: 0.8}]->(kp8);
+
+// 6. 验证数据
+MATCH (kp:KnowledgePoint) RETURN count(kp) as knowledge_points_count;
+MATCH (q:Question) RETURN count(q) as questions_count;
+MATCH ()-[r:TESTS]->() RETURN count(r) as relationships_count;
+
+// 7. 查看所有数据
+MATCH (n) RETURN n LIMIT 25;

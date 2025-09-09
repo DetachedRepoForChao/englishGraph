@@ -11,7 +11,14 @@ import logging
 
 from backend.services.database import neo4j_service
 from backend.models.schema import KnowledgePoint, Question, QuestionType, DifficultyLevel
-from backend.api.routes import knowledge_routes, question_routes, annotation_routes, analytics_routes, ai_agent_routes, meganno_routes, init_routes
+from backend.api.routes import knowledge_routes, question_routes, annotation_routes, analytics_routes, ai_agent_routes, init_routes
+
+# Conditionally import meganno_routes only if not in Vercel
+try:
+    from backend.api.routes import meganno_routes
+    MEGANNO_AVAILABLE = True
+except ImportError:
+    MEGANNO_AVAILABLE = False
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -99,6 +106,37 @@ async def health_check():
     """健康检查接口"""
     return {"status": "healthy", "message": "K12英语知识图谱系统运行正常"}
 
+@app.get("/test-db")
+async def test_database():
+    """测试数据库连接和数据"""
+    try:
+        # 尝试连接
+        if not neo4j_service.driver:
+            connected = neo4j_service.connect()
+            if not connected:
+                return {"error": "Failed to connect to database"}
+        
+        # 测试查询
+        with neo4j_service.driver.session() as session:
+            # 统计数据
+            kp_result = session.run("MATCH (kp:KnowledgePoint) RETURN count(kp) as count")
+            kp_count = kp_result.single()["count"]
+            
+            q_result = session.run("MATCH (q:Question) RETURN count(q) as count")
+            q_count = q_result.single()["count"]
+            
+            return {
+                "status": "success",
+                "database": "connected",
+                "data": {
+                    "knowledge_points": kp_count,
+                    "questions": q_count
+                }
+            }
+    except Exception as e:
+        logger.error(f"Database test failed: {e}")
+        return {"error": str(e), "status": "failed"}
+
 
 # 包含其他路由
 app.include_router(knowledge_routes.router, prefix="/api/knowledge", tags=["知识点"])
@@ -106,7 +144,9 @@ app.include_router(question_routes.router, prefix="/api/questions", tags=["题�
 app.include_router(annotation_routes.router, prefix="/api/annotation", tags=["标注"])
 app.include_router(analytics_routes.router, prefix="/api/analytics", tags=["数据分析"])
 app.include_router(ai_agent_routes.router, prefix="/api/ai-agent", tags=["AI智能代理"])
-app.include_router(meganno_routes.router, prefix="/api/meganno", tags=["MEGAnno+集成"])
+# Conditionally include MEGAnno routes
+if MEGANNO_AVAILABLE:
+    app.include_router(meganno_routes.router, prefix="/api/meganno", tags=["MEGAnno+集成"])
 app.include_router(init_routes.router, prefix="/api", tags=["系统初始化"])
 
 

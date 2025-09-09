@@ -1,0 +1,116 @@
+// Neo4j 数据查看命令集合
+
+// ===== 基础统计查询 =====
+
+// 1. 查看所有节点类型和数量
+CALL db.labels() YIELD label
+CALL {
+  WITH label
+  CALL apoc.cypher.run('MATCH (:`' + label + '`) RETURN count(*) as count', {}) YIELD value
+  RETURN label, value.count as count
+}
+RETURN label, count;
+
+// 简化版本（如果没有APOC）
+MATCH (n:KnowledgePoint) RETURN 'KnowledgePoint' as type, count(n) as count
+UNION
+MATCH (n:Question) RETURN 'Question' as type, count(n) as count;
+
+// 2. 查看所有关系类型和数量
+CALL db.relationshipTypes() YIELD relationshipType
+RETURN relationshipType;
+
+MATCH ()-[r:TESTS]->() RETURN 'TESTS' as relationship, count(r) as count
+UNION
+MATCH ()-[r:HAS_SUB_POINT]->() RETURN 'HAS_SUB_POINT' as relationship, count(r) as count;
+
+// ===== 查看具体数据 =====
+
+// 3. 查看所有知识点
+MATCH (kp:KnowledgePoint)
+RETURN kp.id, kp.name, kp.description, kp.level, kp.difficulty
+ORDER BY kp.name;
+
+// 4. 查看所有题目
+MATCH (q:Question)
+RETURN q.id, q.content, q.question_type, q.answer, q.difficulty
+ORDER BY q.id;
+
+// 5. 查看题目-知识点关系
+MATCH (q:Question)-[r:TESTS]->(kp:KnowledgePoint)
+RETURN q.content as question, kp.name as knowledge_point, r.weight as weight
+ORDER BY r.weight DESC;
+
+// ===== 图形化查看 =====
+
+// 6. 查看整个图结构（限制数量避免过载）
+MATCH (n)
+RETURN n
+LIMIT 25;
+
+// 7. 查看特定知识点相关的所有内容
+MATCH (kp:KnowledgePoint {name: '一般现在时'})<-[r:TESTS]-(q:Question)
+RETURN kp, r, q;
+
+// 8. 查看知识点层级关系
+MATCH (parent:KnowledgePoint)-[r:HAS_SUB_POINT]->(child:KnowledgePoint)
+RETURN parent.name as parent, child.name as child;
+
+// ===== 高级查询 =====
+
+// 9. 查看每个知识点有多少道题目
+MATCH (kp:KnowledgePoint)
+OPTIONAL MATCH (q:Question)-[:TESTS]->(kp)
+RETURN kp.name as knowledge_point, kp.level as level, count(q) as question_count
+ORDER BY question_count DESC;
+
+// 10. 查看每种题目类型的分布
+MATCH (q:Question)
+RETURN q.question_type as type, count(q) as count
+ORDER BY count DESC;
+
+// 11. 查看不同难度的题目分布
+MATCH (q:Question)
+RETURN q.difficulty as difficulty, count(q) as count
+ORDER BY count DESC;
+
+// 12. 查找没有关联知识点的题目
+MATCH (q:Question)
+WHERE NOT (q)-[:TESTS]->()
+RETURN q.content as orphan_questions;
+
+// 13. 查找没有关联题目的知识点
+MATCH (kp:KnowledgePoint)
+WHERE NOT ()-[:TESTS]->(kp)
+RETURN kp.name as unused_knowledge_points;
+
+// ===== 搜索查询 =====
+
+// 14. 按关键词搜索知识点
+MATCH (kp:KnowledgePoint)
+WHERE kp.name CONTAINS '时态' OR any(keyword IN kp.keywords WHERE keyword CONTAINS '时态')
+RETURN kp.name, kp.keywords;
+
+// 15. 按内容搜索题目
+MATCH (q:Question)
+WHERE q.content CONTAINS 'every day'
+RETURN q.content, q.answer;
+
+// ===== 数据完整性检查 =====
+
+// 16. 检查数据完整性
+// 检查是否有空的必填字段
+MATCH (kp:KnowledgePoint)
+WHERE kp.name IS NULL OR kp.name = ''
+RETURN 'Missing knowledge point name' as issue, count(kp) as count
+UNION
+MATCH (q:Question)
+WHERE q.content IS NULL OR q.content = ''
+RETURN 'Missing question content' as issue, count(q) as count;
+
+// 17. 查看数据库schema
+CALL db.schema.visualization();
+
+// 18. 查看所有属性键
+CALL db.propertyKeys() YIELD propertyKey
+RETURN DISTINCT propertyKey ORDER BY propertyKey;
