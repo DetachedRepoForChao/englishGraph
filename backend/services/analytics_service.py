@@ -616,5 +616,120 @@ class AnalyticsService:
             return {"error": str(e)}
 
 
+    def get_ai_agent_accuracy_analysis_paginated(self, page: int = 1, page_size: int = 15, 
+                                               difficulty: str = None, question_type: str = None) -> Dict[str, Any]:
+        """获取AI Agent标注准确率分析（分页版，去重）"""
+        try:
+            # 确保数据库连接
+            if not self._ensure_db_connection():
+                return {"error": "数据库连接失败"}
+            
+            with neo4j_service.driver.session() as session:
+                # 构建筛选条件
+                conditions = []
+                params = {}
+                
+                if difficulty:
+                    conditions.append("q.difficulty = $difficulty")
+                    params["difficulty"] = difficulty
+                
+                if question_type:
+                    conditions.append("q.question_type = $question_type")
+                    params["question_type"] = question_type
+                
+                where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+                
+                # 计算总数（去重，只统计有标注的题目）
+                count_query = f"""
+                    MATCH (q:Question)-[:TESTS]->(kp:KnowledgePoint)
+                    {where_clause}
+                    RETURN count(DISTINCT q) as total
+                """
+                
+                count_result = session.run(count_query, params)
+                total_count = count_result.single()["total"]
+                
+                # 分页查询（去重）
+                skip_count = (page - 1) * page_size
+                params.update({"skip": skip_count, "limit": page_size})
+                
+                data_query = f"""
+                    MATCH (q:Question)-[:TESTS]->(kp:KnowledgePoint)
+                    {where_clause}
+                    WITH DISTINCT q, collect({{name: kp.name, id: kp.id}}) as knowledge_points
+                    RETURN q.id as question_id, q.content as content, q.question_type as question_type,
+                           q.difficulty as difficulty, q.source as source, q.grade_level as grade_level,
+                           q.answer as answer, q.analysis as analysis,
+                           knowledge_points
+                    ORDER BY q.id
+                    SKIP $skip
+                    LIMIT $limit
+                """
+                
+                result = session.run(data_query, params)
+                
+                questions_with_annotations = []
+                for record in result:
+                    question_data = {
+                        "question_id": record["question_id"],
+                        "content": record["content"],
+                        "question_type": record["question_type"],
+                        "difficulty": record["difficulty"],
+                        "source": record["source"],
+                        "grade_level": record["grade_level"],
+                        "answer": record["answer"],
+                        "analysis": record["analysis"],
+                        "knowledge_points": record["knowledge_points"]
+                    }
+                    questions_with_annotations.append(question_data)
+            
+            # 分析当前页的准确率
+            accuracy_analysis = self._analyze_annotation_accuracy(questions_with_annotations)
+            
+            # 计算分页信息
+            total_pages = (total_count + page_size - 1) // page_size
+            
+            # 获取总体统计
+            total_questions = self._get_total_questions_count()
+            
+            return {
+                "accuracy_analysis": accuracy_analysis,
+                "questions_details": questions_with_annotations,
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total_count": total_count,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1
+                },
+                "filters": {
+                    "difficulty": difficulty,
+                    "question_type": question_type
+                },
+                "overall_stats": {
+                    "total_questions": total_questions,
+                    "annotated_questions": total_count,
+                    "coverage_rate": round((total_count / total_questions * 100), 2) if total_questions > 0 else 0
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"AI Agent准确率分析失败: {e}")
+            return {"error": str(e)}
+    
+    def _get_total_questions_count(self) -> int:
+        """获取题目总数"""
+        try:
+            if not self._ensure_db_connection():
+                return 0
+            
+            with neo4j_service.driver.session() as session:
+                result = session.run("MATCH (q:Question) RETURN count(q) as total")
+                return result.single()["total"]
+        except:
+            return 0
+
+
 # 全局分析服务实例
 analytics_service = AnalyticsService()

@@ -115,10 +115,20 @@ async def get_comprehensive_report():
 
 
 @router.get("/ai-agent-accuracy")
-async def get_ai_agent_accuracy():
-    """获取AI Agent标注准确率分析"""
+async def get_ai_agent_accuracy(
+    page: int = 1,
+    page_size: int = 15,
+    difficulty: str = None,
+    question_type: str = None
+):
+    """获取AI Agent标注准确率分析（支持分页）"""
     try:
-        result = analytics_service.get_ai_agent_accuracy_analysis()
+        result = analytics_service.get_ai_agent_accuracy_analysis_paginated(
+            page=page,
+            page_size=page_size,
+            difficulty=difficulty,
+            question_type=question_type
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"准确率分析失败: {str(e)}")

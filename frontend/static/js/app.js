@@ -1196,12 +1196,26 @@ function calculateAIAccuracy(questions) {
     };
 }
 
-// 加载AI Agent准确率分析
-async function loadAIAgentAccuracy() {
+// AI准确率分析分页变量
+let aiAccuracyPage = 1;
+let aiAccuracyPageSize = 15;
+let aiAccuracyFilters = {};
+
+// 加载AI Agent准确率分析（支持分页）
+async function loadAIAgentAccuracy(page = 1, filters = {}) {
     try {
         showLoading('ai-accuracy-section', '正在分析AI Agent准确率...');
         
-        const response = await fetch(`${API_BASE_URL}/analytics/ai-agent-accuracy`);
+        // 构建查询参数
+        const params = new URLSearchParams({
+            page: page.toString(),
+            page_size: aiAccuracyPageSize.toString()
+        });
+        
+        if (filters.difficulty) params.append('difficulty', filters.difficulty);
+        if (filters.question_type) params.append('question_type', filters.question_type);
+        
+        const response = await fetch(`${API_BASE_URL}/analytics/ai-agent-accuracy?${params}`);
         if (!response.ok) {
             throw new Error(`AI准确率API失败: ${response.status}`);
         }
@@ -1209,63 +1223,203 @@ async function loadAIAgentAccuracy() {
         const data = await response.json();
         console.log('AI准确率数据:', data);
         
-        const accuracy = data.accuracy_analysis || {};
-        const details = accuracy.details || [];
+        // 更新全局变量
+        aiAccuracyPage = data.pagination?.page || 1;
+        aiAccuracyFilters = filters;
         
-        const html = `
-            <div class="alert alert-primary">
-                <h6><i class="fas fa-robot me-2"></i>AI Agent性能指标</h6>
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>准确率:</strong> ${(accuracy.accuracy_rate || 0).toFixed(1)}%
-                    </div>
-                    <div class="col-md-3">
-                        <strong>正确标注:</strong> ${accuracy.correct_annotations || 0}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>总标注数:</strong> ${accuracy.total_annotations || 0}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>覆盖率:</strong> ${(data.coverage_rate || 0).toFixed(1)}%
-                    </div>
-                </div>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>题目内容</th>
-                            <th>AI标注</th>
-                            <th>期望标注</th>
-                            <th>准确性</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${details.map(detail => `
-                            <tr>
-                                <td>${detail.content || '未知'}</td>
-                                <td>${(detail.annotated_kps || []).join(', ')}</td>
-                                <td>${(detail.expected_kps || []).join(', ') || '无'}</td>
-                                <td>
-                                    ${detail.is_accurate ? 
-                                        '<span class="badge bg-success">✅ 正确</span>' : 
-                                        '<span class="badge bg-danger">❌ 错误</span>'
-                                    }
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-        
-        document.getElementById('ai-accuracy-section').innerHTML = html;
+        displayAIAccuracyAnalysis(data);
         
     } catch (error) {
         console.error('加载AI准确率失败:', error);
         showError('ai-accuracy-section', `AI准确率加载失败: ${error.message}`);
     }
+}
+
+// 显示AI准确率分析结果
+function displayAIAccuracyAnalysis(data) {
+    const accuracy = data.accuracy_analysis || {};
+    const details = data.questions_details || [];
+    const pagination = data.pagination;
+    const overallStats = data.overall_stats || {};
+    
+    const html = `
+        <!-- 筛选器 -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <select class="form-select form-select-sm" id="ai-difficulty-filter" onchange="applyAIAccuracyFilters()">
+                    <option value="">全部难度</option>
+                    <option value="easy" ${data.filters?.difficulty === 'easy' ? 'selected' : ''}>简单</option>
+                    <option value="medium" ${data.filters?.difficulty === 'medium' ? 'selected' : ''}>中等</option>
+                    <option value="hard" ${data.filters?.difficulty === 'hard' ? 'selected' : ''}>困难</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select form-select-sm" id="ai-type-filter" onchange="applyAIAccuracyFilters()">
+                    <option value="">全部题型</option>
+                    <option value="选择题" ${data.filters?.question_type === '选择题' ? 'selected' : ''}>选择题</option>
+                    <option value="填空题" ${data.filters?.question_type === '填空题' ? 'selected' : ''}>填空题</option>
+                    <option value="阅读理解" ${data.filters?.question_type === '阅读理解' ? 'selected' : ''}>阅读理解</option>
+                    <option value="翻译题" ${data.filters?.question_type === '翻译题' ? 'selected' : ''}>翻译题</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-outline-secondary btn-sm" onclick="clearAIAccuracyFilters()">
+                    <i class="fas fa-times me-1"></i>清空筛选
+                </button>
+            </div>
+        </div>
+        
+        <!-- 总体统计 -->
+        <div class="alert alert-primary">
+            <h6><i class="fas fa-robot me-2"></i>AI Agent性能指标</h6>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>当前页准确率:</strong> ${(accuracy.accuracy_rate || 0).toFixed(1)}%
+                </div>
+                <div class="col-md-3">
+                    <strong>正确标注:</strong> ${accuracy.correct_annotations || 0}
+                </div>
+                <div class="col-md-3">
+                    <strong>当前页题目:</strong> ${accuracy.total_annotations || 0}
+                </div>
+                <div class="col-md-3">
+                    <strong>总覆盖率:</strong> ${(overallStats.coverage_rate || 0).toFixed(1)}%
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <strong>总题目数:</strong> ${overallStats.total_questions || 0}
+                </div>
+                <div class="col-md-6">
+                    <strong>已标注题目:</strong> ${overallStats.annotated_questions || 0}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 题目详情表格 -->
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%">序号</th>
+                        <th width="35%">题目内容</th>
+                        <th width="10%">题型</th>
+                        <th width="10%">难度</th>
+                        <th width="25%">AI标注知识点</th>
+                        <th width="15%">来源</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${details.map((detail, index) => `
+                        <tr>
+                            <td>${((pagination?.page - 1) * pagination?.page_size) + index + 1}</td>
+                            <td>
+                                <div class="question-content" title="${detail.content}">
+                                    ${detail.content?.length > 50 ? 
+                                        detail.content.substring(0, 50) + '...' : 
+                                        detail.content
+                                    }
+                                </div>
+                                ${detail.answer ? `<small class="text-info">答案: ${detail.answer}</small>` : ''}
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">${detail.question_type || '未知'}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-${getDifficultyColor(detail.difficulty)}">
+                                    ${getDifficultyLabel(detail.difficulty)}
+                                </span>
+                            </td>
+                            <td>
+                                ${(detail.knowledge_points || []).map(kp => 
+                                    `<span class="badge bg-success me-1">${kp.name}</span>`
+                                ).join('')}
+                                ${(!detail.knowledge_points || detail.knowledge_points.length === 0) ? 
+                                    '<span class="text-muted">未标注</span>' : ''
+                                }
+                            </td>
+                            <td>
+                                <small>${detail.source || '未知'}</small>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页控件 -->
+        ${pagination ? `
+            <nav aria-label="AI准确率分页">
+                <ul class="pagination justify-content-center" id="ai-accuracy-pagination">
+                    ${generateAIAccuracyPagination(pagination)}
+                </ul>
+            </nav>
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    显示第 ${((pagination.page - 1) * pagination.page_size) + 1} - ${Math.min(pagination.page * pagination.page_size, pagination.total_count)} 条，共 ${pagination.total_count} 条已标注题目
+                </small>
+            </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('ai-accuracy-section').innerHTML = html;
+}
+
+// 生成AI准确率分页控件
+function generateAIAccuracyPagination(pagination) {
+    let paginationHTML = '';
+    
+    // 上一页
+    if (pagination.has_prev) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToAIAccuracyPage(${pagination.page - 1})">上一页</a></li>`;
+    } else {
+        paginationHTML += `<li class="page-item disabled"><span class="page-link">上一页</span></li>`;
+    }
+    
+    // 页码
+    const startPage = Math.max(1, pagination.page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === pagination.page) {
+            paginationHTML += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else {
+            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToAIAccuracyPage(${i})">${i}</a></li>`;
+        }
+    }
+    
+    // 下一页
+    if (pagination.has_next) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToAIAccuracyPage(${pagination.page + 1})">下一页</a></li>`;
+    } else {
+        paginationHTML += `<li class="page-item disabled"><span class="page-link">下一页</span></li>`;
+    }
+    
+    return paginationHTML;
+}
+
+// 跳转AI准确率分析页面
+function goToAIAccuracyPage(page) {
+    loadAIAgentAccuracy(page, aiAccuracyFilters);
+}
+
+// 应用AI准确率筛选器
+function applyAIAccuracyFilters() {
+    const difficulty = document.getElementById('ai-difficulty-filter').value;
+    const questionType = document.getElementById('ai-type-filter').value;
+    
+    const filters = {};
+    if (difficulty) filters.difficulty = difficulty;
+    if (questionType) filters.question_type = questionType;
+    
+    loadAIAgentAccuracy(1, filters);
+}
+
+// 清空AI准确率筛选器
+function clearAIAccuracyFilters() {
+    document.getElementById('ai-difficulty-filter').value = '';
+    document.getElementById('ai-type-filter').value = '';
+    loadAIAgentAccuracy(1, {});
 }
 
 // 显示题目详情
