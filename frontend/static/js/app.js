@@ -1198,3 +1198,96 @@ async function showQuestionDetails(questionId) {
         showMessage(`获取题目详情失败: ${error.message}`, 'danger');
     }
 }
+
+// 加载开源数据
+async function loadOpenSourceData() {
+    if (!confirm('确定要加载开源英语教育数据吗？这将添加更多知识点和题目到数据库中。')) {
+        return;
+    }
+    
+    try {
+        showMessage('正在加载开源数据，请稍候...', 'info');
+        
+        const response = await fetch(`${API_BASE_URL}/load-opensource-data`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'completed') {
+            showMessage(
+                `开源数据加载成功！新增 ${result.imported_knowledge_points} 个知识点，${result.imported_questions} 道题目`, 
+                'success'
+            );
+            
+            // 刷新页面数据
+            loadDashboardStats();
+            loadKnowledgePoints();
+            
+            // 显示数据来源信息
+            setTimeout(() => {
+                showOpenSourceDataInfo();
+            }, 2000);
+            
+        } else {
+            showMessage('开源数据加载失败', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('加载开源数据失败:', error);
+        showMessage('加载开源数据过程中出现错误', 'danger');
+    }
+}
+
+// 显示开源数据统计信息
+async function showOpenSourceDataInfo() {
+    const sourcesInfo = `
+        <div class="alert alert-info alert-dismissible fade show">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h6><i class="fas fa-database me-2"></i>开源数据来源</h6>
+            <p>本系统集成了多个权威开源英语教育资源：</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-2">
+                        <li><strong>Cambridge English Standards</strong> - 剑桥英语标准</li>
+                        <li><strong>Oxford Grammar Standards</strong> - 牛津语法标准</li>
+                        <li><strong>British Council LearnEnglish</strong> - 英国文化协会</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="mb-2">
+                        <li><strong>Murphy's Grammar in Use</strong> - 经典语法教材</li>
+                        <li><strong>Common Core State Standards</strong> - 美国共同核心标准</li>
+                        <li><strong>Essential Grammar in Use</strong> - 基础语法教材</li>
+                    </ul>
+                </div>
+            </div>
+            <p class="mb-0"><span class="badge bg-primary">CEFR A1-C1</span> 覆盖欧洲语言共同参考框架全级别</p>
+        </div>
+    `;
+    
+    // 创建并显示信息弹窗
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = sourcesInfo;
+    infoDiv.style.position = 'fixed';
+    infoDiv.style.top = '20px';
+    infoDiv.style.right = '20px';
+    infoDiv.style.zIndex = '9999';
+    infoDiv.style.maxWidth = '500px';
+    
+    document.body.appendChild(infoDiv);
+    
+    // 10秒后自动移除
+    setTimeout(() => {
+        if (infoDiv.parentNode) {
+            infoDiv.parentNode.removeChild(infoDiv);
+        }
+    }, 10000);
+}

@@ -116,3 +116,107 @@ async def health_check():
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+
+@router.post("/load-opensource-data")
+async def load_opensource_data():
+    """加载开源英语教育数据"""
+    try:
+        from backend.services.open_source_data import open_source_integrator
+        
+        # 确保数据库连接
+        if not neo4j_service.driver:
+            if not neo4j_service.connect():
+                raise HTTPException(status_code=500, detail="数据库连接失败")
+        
+        # 获取开源数据
+        knowledge_points = open_source_integrator.get_all_knowledge_points()
+        questions = open_source_integrator.get_all_questions()
+        
+        # 导入知识点
+        imported_kp = 0
+        with neo4j_service.driver.session() as session:
+            for i, kp in enumerate(knowledge_points):
+                kp_id = f"kp_opensource_{i+1:03d}"
+                
+                # 检查是否已存在
+                existing = session.run("MATCH (kp:KnowledgePoint {name: $name}) RETURN kp", {"name": kp['name']})
+                if existing.single() is None:
+                    session.run("""
+                        CREATE (kp:KnowledgePoint {
+                            id: $id,
+                            name: $name,
+                            description: $description,
+                            difficulty: $difficulty,
+                            keywords: $keywords,
+                            grade_levels: $grade_levels,
+                            source: $source,
+                            cefr_level: $cefr_level
+                        })
+                    """, {
+                        "id": kp_id,
+                        "name": kp['name'],
+                        "description": kp['description'],
+                        "difficulty": kp['difficulty'],
+                        "keywords": kp['keywords'],
+                        "grade_levels": kp['grade_levels'],
+                        "source": kp.get('source', 'Open Source'),
+                        "cefr_level": kp.get('cefr_level', 'A1')
+                    })
+                    imported_kp += 1
+        
+        # 导入题目
+        imported_q = 0
+        with neo4j_service.driver.session() as session:
+            for i, q in enumerate(questions):
+                q_id = f"q_opensource_{i+1:03d}"
+                
+                # 检查是否已存在
+                existing = session.run("MATCH (q:Question {content: $content}) RETURN q", {"content": q['content']})
+                if existing.single() is None:
+                    session.run("""
+                        CREATE (q:Question {
+                            id: $id,
+                            content: $content,
+                            question_type: $question_type,
+                            options: $options,
+                            answer: $answer,
+                            analysis: $analysis,
+                            difficulty: $difficulty,
+                            source: $source,
+                            grade_level: $grade_level
+                        })
+                    """, {
+                        "id": q_id,
+                        "content": q['content'],
+                        "question_type": q['question_type'],
+                        "options": q['options'],
+                        "answer": q['answer'],
+                        "analysis": q.get('analysis', ''),
+                        "difficulty": q['difficulty'],
+                        "source": q.get('source', 'Open Source'),
+                        "grade_level": q.get('grade_level', '未设置')
+                    })
+                    
+                    # 创建关系
+                    for kp_name in q.get("knowledge_points", []):
+                        session.run("""
+                            MATCH (q:Question {id: $q_id})
+                            MATCH (kp:KnowledgePoint {name: $kp_name})
+                            MERGE (q)-[:TESTS {weight: 0.8}]->(kp)
+                        """, {"q_id": q_id, "kp_name": kp_name})
+                    
+                    imported_q += 1
+        
+        return {
+            "status": "completed",
+            "imported_knowledge_points": imported_kp,
+            "imported_questions": imported_q,
+            "total_knowledge_points": len(knowledge_points),
+            "total_questions": len(questions),
+            "message": f"成功导入 {imported_kp} 个知识点和 {imported_q} 道题目"
+        }
+        
+    except Exception as e:
+        logger.error(f"开源数据加载失败: {e}")
+        raise HTTPException(status_code=500, detail=f"开源数据加载失败: {str(e)}")
