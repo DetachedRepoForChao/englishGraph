@@ -872,11 +872,68 @@ function displayAnalyticsData(coverageData, difficultyData, typeData) {
                             </button>
                         </div>
                         <div class="card-body">
+                            <!-- 筛选器 -->
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="difficulty-filter" onchange="applyFilters()">
+                                        <option value="">全部难度</option>
+                                        <option value="easy">简单</option>
+                                        <option value="medium">中等</option>
+                                        <option value="hard">困难</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="type-filter" onchange="applyFilters()">
+                                        <option value="">全部题型</option>
+                                        <option value="选择题">选择题</option>
+                                        <option value="填空题">填空题</option>
+                                        <option value="阅读理解">阅读理解</option>
+                                        <option value="翻译题">翻译题</option>
+                                        <option value="写作题">写作题</option>
+                                        <option value="改错题">改错题</option>
+                                        <option value="转换题">转换题</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="grade-filter" onchange="applyFilters()">
+                                        <option value="">全部年级</option>
+                                        <option value="小学三年级">小学三年级</option>
+                                        <option value="小学四年级">小学四年级</option>
+                                        <option value="小学五年级">小学五年级</option>
+                                        <option value="小学六年级">小学六年级</option>
+                                        <option value="初中一年级">初中一年级</option>
+                                        <option value="初中二年级">初中二年级</option>
+                                        <option value="初中三年级">初中三年级</option>
+                                        <option value="高中一年级">高中一年级</option>
+                                        <option value="高中二年级">高中二年级</option>
+                                        <option value="高中三年级">高中三年级</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm" id="source-filter" 
+                                           placeholder="数据来源筛选..." onchange="applyFilters()">
+                                </div>
+                            </div>
+                            
                             <div id="all-questions-list">
                                 <div class="text-center">
                                     <button class="btn btn-outline-primary" onclick="loadAllQuestions()">
                                         <i class="fas fa-list me-1"></i>加载所有题目
                                     </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 分页控件 -->
+                            <div id="pagination-controls" style="display: none;">
+                                <nav aria-label="题目分页">
+                                    <ul class="pagination justify-content-center mt-3" id="pagination-list">
+                                        <!-- 分页按钮将通过JavaScript生成 -->
+                                    </ul>
+                                </nav>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted" id="pagination-info">
+                                        <!-- 分页信息将通过JavaScript显示 -->
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -903,50 +960,63 @@ function displayAnalyticsData(coverageData, difficultyData, typeData) {
     }
 }
 
-// 加载所有题目
-async function loadAllQuestions() {
+// 全局分页变量
+let currentPage = 1;
+let pageSize = 20;
+let totalPages = 1;
+let currentFilters = {};
+
+// 加载所有题目（支持分页）
+async function loadAllQuestions(page = 1, filters = {}) {
     try {
-        showLoading('all-questions-list', '正在加载所有题目...');
+        showLoading('all-questions-list', '正在加载题目...');
         
-        // 直接从题目API获取所有题目
-        const response = await fetch(`${API_BASE_URL}/questions/`);
+        // 构建查询参数
+        const params = new URLSearchParams({
+            page: page.toString(),
+            page_size: pageSize.toString()
+        });
+        
+        // 添加筛选参数
+        if (filters.difficulty) params.append('difficulty', filters.difficulty);
+        if (filters.question_type) params.append('question_type', filters.question_type);
+        if (filters.grade_level) params.append('grade_level', filters.grade_level);
+        if (filters.source) params.append('source', filters.source);
+        
+        const response = await fetch(`${API_BASE_URL}/questions/?${params}`);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('题目数据:', data);
-        console.log('题目数量:', data.count);
-        console.log('题目列表:', data.questions);
+        console.log('分页题目数据:', data);
         
-        const allQuestions = data.questions || [];
-        console.log('处理后的题目列表:', allQuestions);
-        console.log('题目列表长度:', allQuestions.length);
+        // 更新全局变量
+        currentPage = data.pagination.page;
+        totalPages = data.pagination.total_pages;
+        currentFilters = filters;
         
-        displayAllQuestions(allQuestions);
+        const questions = data.questions || [];
+        displayAllQuestions(questions, data.pagination);
         
     } catch (error) {
-        console.error('加载所有题目失败:', error);
+        console.error('加载题目失败:', error);
         showError('all-questions-list', '加载题目失败，请重试');
     }
 }
 
-// 显示所有题目
-function displayAllQuestions(questions) {
+// 显示所有题目（支持分页）
+function displayAllQuestions(questions, pagination = null) {
     console.log('displayAllQuestions被调用，参数:', questions);
-    console.log('参数类型:', typeof questions);
-    console.log('是否为数组:', Array.isArray(questions));
-    console.log('长度:', questions ? questions.length : 'undefined');
+    console.log('分页信息:', pagination);
     
     const container = document.getElementById('all-questions-list');
     
     if (!questions || questions.length === 0) {
-        console.log('显示空状态，原因: questions为空或长度为0');
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-question-circle"></i>
                 <p>暂无题目数据</p>
-                <p class="text-muted">调试信息: questions=${questions}, length=${questions ? questions.length : 'undefined'}</p>
             </div>
         `;
         return;
@@ -1046,25 +1116,41 @@ function displayAllQuestions(questions) {
             </table>
         </div>
         
-        <div class="mt-3">
-            <div class="alert alert-secondary">
-                <h6><i class="fas fa-info-circle me-2"></i>题目统计</h6>
-                <div class="row">
-                    <div class="col-md-4">
-                        <strong>选择题:</strong> ${questions.filter(q => q.question_type === '选择题').length} 道
-                    </div>
-                    <div class="col-md-4">
-                        <strong>填空题:</strong> ${questions.filter(q => q.question_type === '填空题').length} 道
-                    </div>
-                    <div class="col-md-4">
-                        <strong>其他类型:</strong> ${questions.filter(q => !['选择题', '填空题'].includes(q.question_type)).length} 道
+        ${pagination ? `
+            <div class="mt-3">
+                <div class="alert alert-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-info-circle me-2"></i>当前页统计</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>选择题:</strong> ${questions.filter(q => q.question_type === '选择题').length} 道
+                                </div>
+                                <div class="col-6">
+                                    <strong>其他题型:</strong> ${questions.filter(q => q.question_type !== '选择题').length} 道
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-chart-pie me-2"></i>分页信息</h6>
+                            <p class="mb-0">
+                                第 ${pagination.page} 页 / 共 ${pagination.total_pages} 页<br>
+                                显示 ${questions.length} 道 / 总计 ${pagination.total_count} 道题目
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
+        ` : ''}
+`;
     
     container.innerHTML = html;
+    
+    // 显示分页控件
+    if (pagination) {
+        generatePaginationControls(pagination);
+        document.getElementById('pagination-controls').style.display = 'block';
+    }
 }
 
 // 计算AI Agent准确率
@@ -1291,3 +1377,161 @@ async function showOpenSourceDataInfo() {
         }
     }, 10000);
 }
+
+// 加载教育标准数据
+async function loadEducationalStandards() {
+    if (!confirm('确定要加载基于教育标准的真实题库吗？这将添加人教版、牛津版等权威教材的题目。')) {
+        return;
+    }
+    
+    try {
+        showMessage('正在加载教育标准数据，请稍候...', 'info');
+        
+        const response = await fetch(`${API_BASE_URL}/load-educational-standards`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'completed') {
+            showMessage(
+                `教育标准数据加载成功！新增 ${result.imported_knowledge_points} 个知识点，${result.imported_questions} 道题目`, 
+                'success'
+            );
+            
+            // 刷新页面数据
+            loadDashboardStats();
+            loadKnowledgePoints();
+            
+            // 显示数据来源信息
+            setTimeout(() => {
+                showEducationalStandardsInfo(result);
+            }, 2000);
+            
+        } else {
+            showMessage('教育标准数据加载失败', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('加载教育标准数据失败:', error);
+        showMessage('加载教育标准数据过程中出现错误', 'danger');
+    }
+}
+
+// 显示教育标准数据信息
+async function showEducationalStandardsInfo(result) {
+    const sourcesInfo = `
+        <div class="alert alert-warning alert-dismissible fade show">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h6><i class="fas fa-graduation-cap me-2"></i>教育标准数据来源</h6>
+            <p>基于中国K12教育课程标准和权威教材：</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-2">
+                        <li><strong>人教版教材</strong> - 中国主流教材</li>
+                        <li><strong>牛津英语</strong> - 国际权威教材</li>
+                        <li><strong>剑桥英语</strong> - 剑桥大学出版</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="mb-2">
+                        <li><strong>课程标准</strong> - 教育部标准</li>
+                        <li><strong>CEFR框架</strong> - 欧洲语言标准</li>
+                        <li><strong>真实教学场景</strong> - 实际课堂应用</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-2">
+                <span class="badge bg-primary">新增知识点: ${result.imported_knowledge_points}</span>
+                <span class="badge bg-success ms-1">新增题目: ${result.imported_questions}</span>
+                <span class="badge bg-info ms-1">涵盖主题: 22个</span>
+            </div>
+        </div>
+    `;
+    
+    // 创建并显示信息弹窗
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = sourcesInfo;
+    infoDiv.style.position = 'fixed';
+    infoDiv.style.top = '20px';
+    infoDiv.style.right = '20px';
+    infoDiv.style.zIndex = '9999';
+    infoDiv.style.maxWidth = '500px';
+    
+    document.body.appendChild(infoDiv);
+    
+    // 10秒后自动移除
+    setTimeout(() => {
+        if (infoDiv.parentNode) {
+            infoDiv.parentNode.removeChild(infoDiv);
+        }
+    }, 10000);
+}
+
+
+// 生成分页控件
+function generatePaginationControls(pagination) {
+    const paginationList = document.getElementById("pagination-list");
+    const paginationInfo = document.getElementById("pagination-info");
+    
+    let paginationHTML = "";
+    
+    // 上一页按钮
+    if (pagination.has_prev) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${pagination.page - 1})"><i class="fas fa-chevron-left"></i> 上一页</a></li>`;
+    } else {
+        paginationHTML += `<li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i> 上一页</span></li>`;
+    }
+    
+    // 页码按钮
+    const startPage = Math.max(1, pagination.page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === pagination.page) {
+            paginationHTML += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else {
+            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${i})">${i}</a></li>`;
+        }
+    }
+    
+    // 下一页按钮
+    if (pagination.has_next) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${pagination.page + 1})">下一页 <i class="fas fa-chevron-right"></i></a></li>`;
+    } else {
+        paginationHTML += `<li class="page-item disabled"><span class="page-link">下一页 <i class="fas fa-chevron-right"></i></span></li>`;
+    }
+    
+    paginationList.innerHTML = paginationHTML;
+    paginationInfo.innerHTML = `显示第 ${((pagination.page - 1) * pagination.page_size) + 1} - ${Math.min(pagination.page * pagination.page_size, pagination.total_count)} 条，共 ${pagination.total_count} 条记录`;
+}
+
+// 跳转到指定页面
+function goToPage(page) {
+    loadAllQuestions(page, currentFilters);
+}
+
+// 应用筛选器
+function applyFilters() {
+    const difficulty = document.getElementById("difficulty-filter").value;
+    const questionType = document.getElementById("type-filter").value;
+    const gradeLevel = document.getElementById("grade-filter").value;
+    const source = document.getElementById("source-filter").value;
+    
+    const filters = {};
+    if (difficulty) filters.difficulty = difficulty;
+    if (questionType) filters.question_type = questionType;
+    if (gradeLevel) filters.grade_level = gradeLevel;
+    if (source) filters.source = source;
+    
+    // 重置到第一页
+    loadAllQuestions(1, filters);
+}
+

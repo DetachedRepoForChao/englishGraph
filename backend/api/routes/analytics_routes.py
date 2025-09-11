@@ -136,11 +136,14 @@ async def get_dashboard_stats():
         covered_kps = coverage["summary"].get("covered_knowledge_points", 0)
         coverage_rate = (covered_kps / total_kps * 100) if total_kps > 0 else 0
         
-        # 统计已标注题目数
-        annotated_questions = sum(
-            kp["question_count"] for kp in coverage["coverage_data"] 
-            if kp["question_count"] > 0
-        )
+        # 正确统计已标注题目数（避免重复计算）
+        from backend.services.database import neo4j_service
+        if not neo4j_service.driver:
+            neo4j_service.connect()
+        
+        with neo4j_service.driver.session() as session:
+            annotated_result = session.run("MATCH (q:Question)-[:TESTS]->() RETURN count(DISTINCT q) as count")
+            annotated_questions = annotated_result.single()["count"]
         
         return {
             "total_knowledge_points": total_kps,

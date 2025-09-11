@@ -46,7 +46,6 @@ class AnalyticsService:
                 """)
                 
                 coverage_data = []
-                total_questions = 0
                 
                 for record in result:
                     kp_data = {
@@ -56,7 +55,10 @@ class AnalyticsService:
                         "question_count": record["question_count"]
                     }
                     coverage_data.append(kp_data)
-                    total_questions += record["question_count"]
+                
+                # 正确计算总题目数（避免重复计算）
+                total_questions_result = session.run("MATCH (q:Question) RETURN count(q) as total")
+                total_questions = total_questions_result.single()["total"]
                 
                 # 计算覆盖率统计
                 covered_kps = len([kp for kp in coverage_data if kp["question_count"] > 0])

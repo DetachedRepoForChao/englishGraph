@@ -10,24 +10,74 @@ router = APIRouter()
 
 
 @router.get("/")
-async def get_all_questions():
-    """获取所有题目"""
+async def get_questions(
+    page: int = 1,
+    page_size: int = 20,
+    difficulty: str = None,
+    question_type: str = None,
+    grade_level: str = None,
+    source: str = None
+):
+    """获取题目列表（支持分页和筛选）"""
     try:
         # 确保数据库连接
         if not neo4j_service.driver:
             if not neo4j_service.connect():
                 raise HTTPException(status_code=500, detail="数据库连接失败")
         
+        # 构建筛选条件
+        conditions = []
+        params = {}
+        
+        if difficulty:
+            conditions.append("q.difficulty = $difficulty")
+            params["difficulty"] = difficulty
+        
+        if question_type:
+            conditions.append("q.question_type = $question_type")
+            params["question_type"] = question_type
+            
+        if grade_level:
+            conditions.append("q.grade_level = $grade_level")
+            params["grade_level"] = grade_level
+            
+        if source:
+            conditions.append("q.source CONTAINS $source")
+            params["source"] = source
+        
+        where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+        
+        # 计算总数
+        count_query = f"""
+            MATCH (q:Question)
+            {where_clause}
+            RETURN count(q) as total
+        """
+        
+        # 分页查询
+        skip_count = (page - 1) * page_size
+        params.update({"skip": skip_count, "limit": page_size})
+        
+        data_query = f"""
+            MATCH (q:Question)
+            {where_clause}
+            OPTIONAL MATCH (q)-[r:TESTS]->(kp:KnowledgePoint)
+            RETURN q.id as id, q.content as content, q.question_type as question_type,
+                   q.options as options, q.answer as answer, q.analysis as analysis,
+                   q.difficulty as difficulty, q.source as source, q.grade_level as grade_level,
+                   collect(kp.name) as knowledge_points
+            ORDER BY q.id
+            SKIP $skip
+            LIMIT $limit
+        """
+        
         with neo4j_service.driver.session() as session:
-            result = session.run("""
-                MATCH (q:Question)
-                OPTIONAL MATCH (q)-[r:TESTS]->(kp:KnowledgePoint)
-                RETURN q.id as id, q.content as content, q.question_type as question_type,
-                       q.options as options, q.answer as answer, q.analysis as analysis,
-                       q.difficulty as difficulty, q.source as source,
-                       collect(kp.name) as knowledge_points
-                ORDER BY q.id
-            """)
+            # 获取总数
+            count_result = session.run(count_query, {k: v for k, v in params.items() if k not in ["skip", "limit"]})
+            total_count = count_result.single()["total"]
+            
+            # 获取分页数据
+            result = session.run(data_query, params)
             
             questions = []
             for record in result:
@@ -40,11 +90,31 @@ async def get_all_questions():
                     "analysis": record["analysis"],
                     "difficulty": record["difficulty"],
                     "source": record["source"],
+                    "grade_level": record["grade_level"],
                     "knowledge_points": [kp for kp in record["knowledge_points"] if kp]
                 }
                 questions.append(question_data)
         
-        return {"questions": questions, "count": len(questions)}
+        # 计算分页信息
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        return {
+            "questions": questions,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total_count": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            },
+            "filters": {
+                "difficulty": difficulty,
+                "question_type": question_type,
+                "grade_level": grade_level,
+                "source": source
+            }
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取题目失败: {str(e)}")
