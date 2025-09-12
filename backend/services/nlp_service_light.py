@@ -83,8 +83,7 @@ class NLPService:
                 "concerning", "concerned about", "being concerned", "to concern",
                 "interested in", "excited about", "surprised at", "worried about",
                 "being", "to be", "to do", "doing", "done",
-                "现在分词", "过去分词", "不定式", "动名词", "非谓语动词",
-                "分词", "participle", "infinitive", "gerund"
+                "现在分词", "过去分词", "不定式", "动名词", "非谓语动词"
             ],
             "比较级和最高级": [
                 "than", "more", "most", "better", "best", "bigger", "biggest",
@@ -114,9 +113,12 @@ class NLPService:
             推荐的知识点列表，按置信度排序
         """
         try:
-            # 专注于题干分析，排除选项干扰
+            # 提取题干进行主要分析
             question_stem = self._extract_question_stem(question_content)
             processed_text = self._preprocess_text(question_stem)
+            
+            # 提取选项用于辅助分析
+            options = self._extract_options(question_content)
             
             # 首先获取数据库中的知识点来获取ID
             from backend.services.database import neo4j_service
@@ -139,7 +141,7 @@ class NLPService:
             # 为每个知识点计算匹配分数
             suggestions = []
             
-            # 检查所有知识点 (增强库 + 关键词模式 + 数据库)
+            # 检查所有知识点 (增强库 + 关键词模式)
             knowledge_points_to_check = set()
             
             # 添加增强知识库中的知识点
@@ -148,9 +150,6 @@ class NLPService:
             
             # 添加关键词模式中的知识点
             knowledge_points_to_check.update(self.keyword_patterns.keys())
-            
-            # 添加数据库中的所有知识点
-            knowledge_points_to_check.update(kp_id_map.keys())
             
             knowledge_points_to_check = list(knowledge_points_to_check)
             
@@ -205,43 +204,20 @@ class NLPService:
                         }
                         suggestions.append(suggestion)
                 
-                # 对于不在增强库中的知识点 (如新添加的非谓语动词)
+                # 对于不在增强库中的知识点，使用基础算法
                 elif kp_name in self.keyword_patterns:
-                    # 关键词匹配
                     keyword_score, matched_keywords = self._keyword_matching_score(processed_text, kp_name)
                     
-                    # 语言学特征分析
-                    linguistic_score = self._analyze_linguistic_features_for_knowledge_point(question_stem, kp_name)
+                    # 对于特定知识点，也检查选项中的关键词
+                    if kp_name == "非谓语动词" and options:
+                        option_text = " ".join(options).lower()
+                        option_score, option_keywords = self._keyword_matching_score(option_text, kp_name)
+                        if option_score > keyword_score:
+                            keyword_score = option_score
+                            matched_keywords = option_keywords
                     
-                    # 题型分析
-                    type_score = self._question_type_score(question_content, kp_name)
-                    
-                    # 综合评分
-                    final_confidence = min(linguistic_score * 0.6 + keyword_score * 0.3 + type_score * 0.1, 1.0)
-                    
-                    # 降低阈值以确保新知识点能被推荐
-                    threshold = 0.15 if kp_name == "非谓语动词" else 0.25
-                    if final_confidence > threshold or linguistic_score > 0.5:
-                        # 获取知识点ID
-                        kp_id = kp_id_map.get(kp_name, f"kp_{kp_name.replace(' ', '_')}")
-                        
-                        # 生成推荐
-                        reasoning = f"关键词匹配 (评分: {keyword_score:.2f}) + 语言学分析 (评分: {linguistic_score:.2f})"
-                        if linguistic_score > 0.8:
-                            reasoning += " + 高置信度语言学特征"
-                        
-                        suggestions.append({
-                            "knowledge_point_id": kp_id,
-                            "knowledge_point_name": kp_name,
-                            "knowledge_point": kp_name,
-                            "confidence": final_confidence,
-                            "reason": reasoning,
-                            "reasoning": reasoning,
-                            "matched_keywords": matched_keywords,
-                            "linguistic_score": linguistic_score,
-                            "keyword_score": keyword_score,
-                            "type_score": type_score
-                        })
+                    linguistic_score = self._analyze_linguistic_features(question_stem, kp_name)
+                    type_score = self._question_type_score(question_type, kp_name)
                     
                     if linguistic_score > 0.5:
                         total_score = linguistic_score * 0.6 + keyword_score * 0.3 + type_score * 0.1
@@ -287,23 +263,35 @@ class NLPService:
     
     def _extract_question_stem(self, question_content: str) -> str:
         """提取题干，排除选项干扰"""
-        # 移除常见的选项格式
-        patterns_to_remove = [
-            r'A\)\s*\w+\s*B\)\s*\w+\s*C\)\s*\w+\s*D\)\s*\w+',  # A) word B) word C) word D) word
-            r'A\.\s*\w+\s*B\.\s*\w+\s*C\.\s*\w+\s*D\.\s*\w+',  # A. word B. word C. word D. word
-            r'[ABCD]\)\s*[^)]+(?=\s*[ABCD]\)|$)',  # 单个选项
-            r'[ABCD]\.\s*[^.]+(?=\s*[ABCD]\.|$)',  # 单个选项
-        ]
-        
-        question_stem = question_content
-        for pattern in patterns_to_remove:
-            question_stem = re.sub(pattern, '', question_stem, flags=re.IGNORECASE)
+        # 更精确的选项移除
+        # 先找到第一个选项的位置
+        option_match = re.search(r'\s+[ABCD][\.\)]\s*', question_content)
+        if option_match:
+            # 只保留选项前的部分作为题干
+            question_stem = question_content[:option_match.start()].strip()
+        else:
+            question_stem = question_content
         
         # 清理多余的空格和标点
         question_stem = re.sub(r'\s+', ' ', question_stem).strip()
         question_stem = re.sub(r'[.,;!?]+$', '', question_stem)  # 移除末尾标点
         
         return question_stem
+    
+    def _extract_options(self, question_content: str) -> List[str]:
+        """提取题目选项"""
+        options = []
+        # 更简单的方式：直接查找选项部分
+        option_part = re.search(r'A\.\s*(.*)', question_content, re.IGNORECASE | re.DOTALL)
+        if option_part:
+            option_text = option_part.group(1)
+            # 按选项标识符分割
+            parts = re.split(r'[BCD]\.\s*', option_text)
+            for part in parts:
+                cleaned = part.strip()
+                if cleaned and not re.match(r'^[ABCD][\.\)]', cleaned):
+                    options.append(cleaned)
+        return options
     
     def _analyze_linguistic_features(self, question_stem: str, knowledge_point: str) -> float:
         """分析语言特征（基于LabelLLM思想）"""
@@ -378,17 +366,13 @@ class NLPService:
             if "concerning" in stem_lower:
                 score = max(score, 0.9)
             
-            # 过去分词+介词结构 (这是目标题目的关键特征)
+            # 过去分词+介词结构
             if "concerned about" in stem_lower:
                 score = max(score, 0.95)
             
             # being + 分词结构
             if "being concerned" in stem_lower:
                 score = max(score, 0.85)
-            
-            # 逗号+分词结构 (分词作状语)
-            if re.search(r',\s*\w+ing\b', stem_lower) or re.search(r',\s*\w+ed\b', stem_lower):
-                score = max(score, 0.8)
             
             return score
         
@@ -436,6 +420,8 @@ class NLPService:
                     score += 3.0
                 elif pattern in ["every day", "yesterday", "now", "already", "by", "than", "look!", "listen!"]:  # 强标志词
                     score += 3.0
+                elif pattern in ["concerning", "concerned about", "being concerned"]:  # 非谓语动词强标志词
+                    score += 5.0
                 else:  # 普通关键词
                     score += 1.0
         
