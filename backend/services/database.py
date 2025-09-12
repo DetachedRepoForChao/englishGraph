@@ -235,8 +235,9 @@ class Neo4jService:
         with self.driver.session() as session:
             cypher = """
             MATCH (parent:KnowledgePoint)-[:HAS_SUB_POINT]->(child:KnowledgePoint)
-            RETURN parent.name as parent_name, child.name as child_name,
+            RETURN DISTINCT parent.name as parent_name, child.name as child_name,
                    parent.id as parent_id, child.id as child_id
+            ORDER BY parent.name, child.name
             """
             result = session.run(cypher)
             return [dict(record) for record in result]

@@ -78,6 +78,14 @@ class NLPService:
                 "I think that", "I know that", "I believe that", "I wonder if",
                 "宾语从句", "从句", "连接词", "引导词"
             ],
+            
+            "非谓语动词": [
+                "concerning", "concerned about", "being concerned", "to concern",
+                "interested in", "excited about", "surprised at", "worried about",
+                "being", "to be", "to do", "doing", "done",
+                "现在分词", "过去分词", "不定式", "动名词", "非谓语动词",
+                "分词", "participle", "infinitive", "gerund"
+            ],
             "比较级和最高级": [
                 "than", "more", "most", "better", "best", "bigger", "biggest",
                 "比较级", "最高级", "更", "最", "er", "est",
@@ -131,15 +139,24 @@ class NLPService:
             # 为每个知识点计算匹配分数
             suggestions = []
             
-            # 优先使用增强知识库
+            # 检查所有知识点 (增强库 + 关键词模式 + 数据库)
+            knowledge_points_to_check = set()
+            
+            # 添加增强知识库中的知识点
             if self.enhanced_kb:
-                knowledge_points_to_check = list(self.enhanced_kb.knowledge_base.keys())
-            else:
-                knowledge_points_to_check = list(self.keyword_patterns.keys())
+                knowledge_points_to_check.update(self.enhanced_kb.knowledge_base.keys())
+            
+            # 添加关键词模式中的知识点
+            knowledge_points_to_check.update(self.keyword_patterns.keys())
+            
+            # 添加数据库中的所有知识点
+            knowledge_points_to_check.update(kp_id_map.keys())
+            
+            knowledge_points_to_check = list(knowledge_points_to_check)
             
             for kp_name in knowledge_points_to_check:
-                # 使用增强知识库进行分析
-                if self.enhanced_kb:
+                # 使用增强知识库进行分析 (如果知识点在增强库中)
+                if self.enhanced_kb and kp_name in self.enhanced_kb.knowledge_base:
                     analysis_result = self.enhanced_kb.analyze_question_features(question_stem, kp_name)
                     
                     # 提高阈值，只返回有意义的匹配
@@ -187,11 +204,44 @@ class NLPService:
                             "feature_analysis": analysis_result["matched_features"]
                         }
                         suggestions.append(suggestion)
-                else:
-                    # 回退到基础算法
+                
+                # 对于不在增强库中的知识点 (如新添加的非谓语动词)
+                elif kp_name in self.keyword_patterns:
+                    # 关键词匹配
                     keyword_score, matched_keywords = self._keyword_matching_score(processed_text, kp_name)
-                    linguistic_score = self._analyze_linguistic_features(question_stem, kp_name)
-                    type_score = self._question_type_score(question_type, kp_name)
+                    
+                    # 语言学特征分析
+                    linguistic_score = self._analyze_linguistic_features_for_knowledge_point(question_stem, kp_name)
+                    
+                    # 题型分析
+                    type_score = self._question_type_score(question_content, kp_name)
+                    
+                    # 综合评分
+                    final_confidence = min(linguistic_score * 0.6 + keyword_score * 0.3 + type_score * 0.1, 1.0)
+                    
+                    # 降低阈值以确保新知识点能被推荐
+                    threshold = 0.15 if kp_name == "非谓语动词" else 0.25
+                    if final_confidence > threshold or linguistic_score > 0.5:
+                        # 获取知识点ID
+                        kp_id = kp_id_map.get(kp_name, f"kp_{kp_name.replace(' ', '_')}")
+                        
+                        # 生成推荐
+                        reasoning = f"关键词匹配 (评分: {keyword_score:.2f}) + 语言学分析 (评分: {linguistic_score:.2f})"
+                        if linguistic_score > 0.8:
+                            reasoning += " + 高置信度语言学特征"
+                        
+                        suggestions.append({
+                            "knowledge_point_id": kp_id,
+                            "knowledge_point_name": kp_name,
+                            "knowledge_point": kp_name,
+                            "confidence": final_confidence,
+                            "reason": reasoning,
+                            "reasoning": reasoning,
+                            "matched_keywords": matched_keywords,
+                            "linguistic_score": linguistic_score,
+                            "keyword_score": keyword_score,
+                            "type_score": type_score
+                        })
                     
                     if linguistic_score > 0.5:
                         total_score = linguistic_score * 0.6 + keyword_score * 0.3 + type_score * 0.1
@@ -319,6 +369,28 @@ class NLPService:
             if any(pronoun + " " in stem_lower for pronoun in relative_pronouns):
                 return 0.9
             return 0.0
+        
+        elif knowledge_point == "非谓语动词":
+            # 检查非谓语动词特征
+            score = 0.0
+            
+            # 现在分词特征
+            if "concerning" in stem_lower:
+                score = max(score, 0.9)
+            
+            # 过去分词+介词结构 (这是目标题目的关键特征)
+            if "concerned about" in stem_lower:
+                score = max(score, 0.95)
+            
+            # being + 分词结构
+            if "being concerned" in stem_lower:
+                score = max(score, 0.85)
+            
+            # 逗号+分词结构 (分词作状语)
+            if re.search(r',\s*\w+ing\b', stem_lower) or re.search(r',\s*\w+ed\b', stem_lower):
+                score = max(score, 0.8)
+            
+            return score
         
         elif knowledge_point == "宾语从句":
             # 检查宾语从句引导词
