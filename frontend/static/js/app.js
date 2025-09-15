@@ -1810,3 +1810,16 @@ function applyFilters() {
     loadAllQuestions(1, filters);
 }
 
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面加载完成，开始初始化...');
+    
+    // 自动加载知识层级结构
+    setTimeout(() => {
+        console.log('开始加载知识层级结构...');
+        loadKnowledgeHierarchy();
+    }, 1000); // 延迟1秒加载，确保页面完全渲染
+    
+    console.log('页面初始化完成');
+});
+

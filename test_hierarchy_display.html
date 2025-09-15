@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识层级显示测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 知识层级样式 */
+        .hierarchy-container {
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .hierarchy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .hierarchy-stats {
+            display: flex;
+            gap: 8px;
+        }
+
+        .hierarchy-tree {
+            padding: 15px 0;
+        }
+
+        .tree-node {
+            margin-bottom: 8px;
+        }
+
+        .node-content {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .node-content:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .node-children {
+            margin-top: 5px;
+            padding-left: 10px;
+            border-left: 2px solid #dee2e6;
+        }
+
+        .tree-node .fas {
+            color: #6c757d;
+        }
+
+        .tree-node .fa-folder {
+            color: #ffc107;
+        }
+
+        .tree-node .fa-file {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sitemap me-2"></i>知识层级显示测试</h5>
+                        <button class="btn btn-primary btn-sm float-end" onclick="loadKnowledgeHierarchy()">
+                            <i class="fas fa-refresh me-1"></i>重新加载
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="knowledge-hierarchy" style="height: 500px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 10px;">
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary" onclick="loadKnowledgeHierarchy()">
+                                    <i class="fas fa-sitemap me-1"></i>加载知识层级结构
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://english-knowledge-graph-2ktxa4o24-chao-wangs-projects-dfded257.vercel.app/api';
+
+        // 显示加载状态
+        function showLoading(containerId) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">正在加载知识层级结构...</p>
+                </div>
+            `;
+        }
+
+        // 显示错误信息
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>${message}</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadKnowledgeHierarchy()">
+                        <i class="fas fa-retry me-1"></i>重试
+                    </button>
+                </div>
+            `;
+        }
+
+        // 加载知识点层级结构
+        async function loadKnowledgeHierarchy() {
+            try {
+                showLoading('knowledge-hierarchy');
+                console.log('开始加载知识层级...');
+                
+                const response = await fetch(`${API_BASE_URL}/knowledge/hierarchy/tree`);
+                console.log('API响应状态:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('知识点层级结构:', data);
+                
+                displayKnowledgeHierarchy(data);
+            } catch (error) {
+                console.error('加载知识点层级失败:', error);
+                showError('knowledge-hierarchy', `加载失败: ${error.message}`);
+            }
+        }
+
+        // 显示知识点层级结构
+        function displayKnowledgeHierarchy(data) {
+            const container = document.getElementById('knowledge-hierarchy');
+            
+            if (!data.hierarchy || data.hierarchy.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-sitemap fa-3x mb-3"></i>
+                        <p>暂无知识点层级数据</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('开始构建层级树结构...');
+            
+            // 构建层级树结构
+            const hierarchyMap = new Map();
+            const rootNodes = new Set();
+            
+            // 处理层级数据
+            data.hierarchy.forEach(item => {
+                const parentName = item.parent_name;
+                const childName = item.child_name;
+                
+                if (!hierarchyMap.has(parentName)) {
+                    hierarchyMap.set(parentName, {
+                        name: parentName,
+                        id: item.parent_id,
+                        children: []
+                    });
+                }
+                
+                hierarchyMap.get(parentName).children.push({
+                    name: childName,
+                    id: item.child_id
+                });
+                
+                // 记录所有出现的节点
+                rootNodes.add(parentName);
+            });
+            
+            // 找到真正的根节点（不作为任何节点的子节点）
+            const childNodes = new Set();
+            data.hierarchy.forEach(item => {
+                childNodes.add(item.child_name);
+            });
+            
+            const realRootNodes = Array.from(rootNodes).filter(node => !childNodes.has(node));
+            console.log('根节点:', realRootNodes);
+            console.log('层级映射:', hierarchyMap);
+            
+            // 生成HTML
+            let hierarchyHTML = `
+                <div class="hierarchy-container">
+                    <div class="hierarchy-header mb-3">
+                        <h6><i class="fas fa-sitemap me-2"></i>知识点层级结构</h6>
+                        <div class="hierarchy-stats">
+                            <span class="badge bg-primary me-2">总节点: ${hierarchyMap.size}</span>
+                            <span class="badge bg-success me-2">关系: ${data.hierarchy.length}</span>
+                            <span class="badge bg-info">根节点: ${realRootNodes.length}</span>
+                        </div>
+                    </div>
+                    <div class="hierarchy-tree">
+            `;
+            
+            // 渲染根节点及其子树
+            realRootNodes.forEach(rootName => {
+                if (hierarchyMap.has(rootName)) {
+                    hierarchyHTML += generateTreeNode(hierarchyMap.get(rootName), hierarchyMap, 0);
+                }
+            });
+            
+            hierarchyHTML += `
+                    </div>
+                </div>
+            `;
+            
+            console.log('生成的HTML长度:', hierarchyHTML.length);
+            container.innerHTML = hierarchyHTML;
+            console.log('知识层级显示完成');
+        }
+
+        // 生成树节点HTML
+        function generateTreeNode(node, hierarchyMap, level) {
+            const hasChildren = node.children && node.children.length > 0;
+            
+            let nodeHTML = `
+                <div class="tree-node" style="margin-left: ${level * 20}px;">
+                    <div class="node-content">
+                        <i class="fas fa-${hasChildren ? 'folder' : 'file'} me-2"></i>
+                        <strong>${node.name}</strong>
+                        <span class="text-muted ms-2">(${node.id})</span>
+                        ${hasChildren ? `<span class="badge bg-secondary ms-2">${node.children.length}</span>` : ''}
+                    </div>
+            `;
+            
+            // 渲染子节点
+            if (hasChildren) {
+                nodeHTML += '<div class="node-children">';
+                node.children.forEach(child => {
+                    if (hierarchyMap.has(child.name)) {
+                        // 如果子节点也有子节点，递归渲染
+                        nodeHTML += generateTreeNode(hierarchyMap.get(child.name), hierarchyMap, level + 1);
+                    } else {
+                        // 叶子节点
+                        nodeHTML += `
+                            <div class="tree-node" style="margin-left: ${(level + 1) * 20}px;">
+                                <div class="node-content">
+                                    <i class="fas fa-file me-2"></i>
+                                    ${child.name}
+                                    <span class="text-muted ms-2">(${child.id})</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                nodeHTML += '</div>';
+            }
+            
+            nodeHTML += '</div>';
+            return nodeHTML;
+        }
+
+        // 页面加载时自动加载知识层级
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始加载知识层级...');
+            loadKnowledgeHierarchy();
+        });
+    </script>
+</body>
+</html>

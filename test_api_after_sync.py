@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-API_BASE = "https://english-knowledge-graph-j6e3p89bw-chao-wangs-projects-dfded257.vercel.app"
+API_BASE = "https://english-knowledge-graph-2ktxa4o24-chao-wangs-projects-dfded257.vercel.app"
 
 def test_api_functionality():
     """测试API功能"""
