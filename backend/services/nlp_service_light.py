@@ -200,8 +200,16 @@ class NLPService:
                 if self.enhanced_kb and kp_name in self.enhanced_kb.knowledge_base:
                     analysis_result = self.enhanced_kb.analyze_question_features(question_stem, kp_name)
                     
-                    # 提高阈值，只返回有意义的匹配
-                    if analysis_result["confidence"] > 0.25 or analysis_result["linguistic_score"] > 0.5:
+                    # 对于基础语法，降低增强库的阈值
+                    if kp_name in ["冠词", "代词", "连词", "介词"]:
+                        enhanced_threshold_confidence = 0.15
+                        enhanced_threshold_linguistic = 0.3
+                    else:
+                        enhanced_threshold_confidence = 0.25
+                        enhanced_threshold_linguistic = 0.5
+                    
+                    # 检查是否达到阈值
+                    if analysis_result["confidence"] > enhanced_threshold_confidence or analysis_result["linguistic_score"] > enhanced_threshold_linguistic:
                         # 获取知识点ID
                         kp_id = kp_id_map.get(kp_name, f"kp_{kp_name.replace(' ', '_')}")
                         
@@ -245,9 +253,17 @@ class NLPService:
                             "feature_analysis": analysis_result["matched_features"]
                         }
                         suggestions.append(suggestion)
+                    
+                    # 如果增强库分析不达标，对于基础语法仍然尝试基础算法
+                    elif kp_name in ["冠词", "代词", "连词", "介词"] and kp_name in self.keyword_patterns:
+                        # 继续使用基础算法
+                        pass
+                    else:
+                        # 其他知识点跳过基础算法
+                        continue
                 
-                # 对于不在增强库中的知识点，使用基础算法
-                elif kp_name in self.keyword_patterns:
+                # 对于不在增强库中的知识点，或者增强库分析不达标的基础语法，使用基础算法
+                if kp_name in self.keyword_patterns and (kp_name not in (self.enhanced_kb.knowledge_base.keys() if self.enhanced_kb else []) or kp_name in ["冠词", "代词", "连词", "介词"]):
                     keyword_score, matched_keywords = self._keyword_matching_score(processed_text, kp_name)
                     linguistic_score = self._analyze_linguistic_features(question_stem, kp_name)
                     type_score = self._question_type_score(question_type, kp_name)
