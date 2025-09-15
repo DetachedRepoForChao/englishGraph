@@ -237,14 +237,14 @@ class NLPService:
                     
                     # 优化分数计算逻辑 - 特别处理重要语法结构
                     if kp_name in ["情态动词", "倒装句"]:
-                        # 对于重要语法结构，降低阈值并优化权重
+                        # 对于重要语法结构，大幅降低阈值并优化权重
                         if linguistic_score > 0.8:
-                            total_score = linguistic_score * 0.8 + keyword_score * 0.15 + type_score * 0.05
+                            total_score = linguistic_score * 0.9 + keyword_score * 0.1
                         elif linguistic_score > 0.5:
-                            total_score = linguistic_score * 0.7 + keyword_score * 0.25 + type_score * 0.05
+                            total_score = linguistic_score * 0.8 + keyword_score * 0.2
                         else:
-                            total_score = keyword_score * 0.6 + linguistic_score * 0.35 + type_score * 0.05
-                        threshold = 0.1  # 降低阈值
+                            total_score = max(linguistic_score * 0.7, keyword_score * 0.8) + type_score * 0.1
+                        threshold = 0.05  # 大幅降低阈值
                     else:
                         # 其他知识点使用原有逻辑
                         if linguistic_score > 0.5:
