@@ -187,6 +187,77 @@ async def debug_nlp_service():
         }
 
 
+@router.post("/debug-preposition")
+async def debug_preposition_recognition():
+    """专门调试介词识别问题"""
+    try:
+        from backend.services.nlp_service_light import nlp_service
+        
+        # 测试题目
+        test_question = "The cat is sitting ___ the table."
+        
+        # 提取题干
+        stem = nlp_service._extract_question_stem(test_question)
+        processed = nlp_service._preprocess_text(stem)
+        
+        # 检查数据库连接和ID映射
+        db_connected = neo4j_service.driver is not None
+        if not db_connected:
+            db_connected = neo4j_service.connect()
+        
+        kp_id_map = {}
+        if db_connected and neo4j_service.driver:
+            with neo4j_service.driver.session() as session:
+                result = session.run("MATCH (kp:KnowledgePoint {name: '介词'}) RETURN kp.id as id, kp.name as name")
+                record = result.single()
+                if record:
+                    kp_id_map['介词'] = record['id']
+        
+        # 分析介词识别
+        kw_score, matched = nlp_service._keyword_matching_score(processed, '介词')
+        ling_score = nlp_service._analyze_linguistic_features(stem, '介词')
+        type_score = nlp_service._question_type_score('选择题', '介词')
+        
+        # 计算总分
+        if ling_score > 0.8:
+            total_score = ling_score * 0.8 + kw_score * 0.1 + type_score * 0.1
+        elif ling_score > 0.5:
+            total_score = ling_score * 0.6 + kw_score * 0.3 + type_score * 0.1
+        else:
+            total_score = kw_score * 0.5 + ling_score * 0.4 + type_score * 0.1
+        
+        threshold = 0.08
+        
+        # 测试完整推荐流程
+        suggestions = nlp_service.suggest_knowledge_points(test_question, "选择题")
+        
+        return {
+            "test_question": test_question,
+            "extracted_stem": stem,
+            "processed_text": processed,
+            "database_connected": db_connected,
+            "preposition_id_mapping": kp_id_map,
+            "analysis": {
+                "keyword_score": kw_score,
+                "matched_keywords": matched,
+                "linguistic_score": ling_score,
+                "type_score": type_score,
+                "total_score": total_score,
+                "threshold": threshold,
+                "passes_threshold": total_score > threshold
+            },
+            "full_suggestions": suggestions,
+            "suggestions_count": len(suggestions)
+        }
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 @router.post("/sync-database")
 async def sync_database():
     """同步数据库，确保云端有所有必要的知识点"""
