@@ -185,3 +185,94 @@ async def debug_nlp_service():
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+
+@router.post("/sync-database")
+async def sync_database():
+    """同步数据库，确保云端有所有必要的知识点"""
+    try:
+        # 确保数据库连接
+        if not neo4j_service.driver:
+            neo4j_service.connect()
+        
+        sync_results = []
+        
+        with neo4j_service.driver.session() as session:
+            # 检查并添加情态动词
+            result = session.run("MATCH (kp:KnowledgePoint {name: '情态动词'}) RETURN kp.id as id")
+            existing = result.single()
+            if not existing:
+                # 添加情态动词知识点
+                session.run("""
+                    CREATE (kp:KnowledgePoint {
+                        id: 'kp_modal_verbs_sync',
+                        name: '情态动词',
+                        description: '情态动词表示说话人的态度、推测、能力、必要性等',
+                        difficulty: 'medium',
+                        grade_levels: ['初中二年级', '初中三年级', '高中一年级'],
+                        learning_objectives: ['掌握情态动词的基本用法', '理解情态动词的推测用法']
+                    })
+                """)
+                # 建立层级关系
+                session.run("""
+                    MATCH (parent:KnowledgePoint {name: '词类语法'})
+                    MATCH (child:KnowledgePoint {name: '情态动词'})
+                    MERGE (parent)-[:HAS_SUB_POINT]->(child)
+                """)
+                sync_results.append({"action": "created", "knowledge_point": "情态动词", "id": "kp_modal_verbs_sync"})
+            else:
+                sync_results.append({"action": "exists", "knowledge_point": "情态动词", "id": existing["id"]})
+            
+            # 检查并添加倒装句
+            result = session.run("MATCH (kp:KnowledgePoint {name: '倒装句'}) RETURN kp.id as id")
+            existing = result.single()
+            if not existing:
+                session.run("""
+                    CREATE (kp:KnowledgePoint {
+                        id: 'kp_inversion_sync',
+                        name: '倒装句',
+                        description: '倒装句是指将谓语动词或助动词提到主语之前的句子结构',
+                        difficulty: 'hard',
+                        grade_levels: ['高中一年级', '高中二年级', '高中三年级'],
+                        learning_objectives: ['掌握部分倒装的结构', '理解完全倒装的使用场景']
+                    })
+                """)
+                session.run("""
+                    MATCH (parent:KnowledgePoint {name: '句型结构'})
+                    MATCH (child:KnowledgePoint {name: '倒装句'})
+                    MERGE (parent)-[:HAS_SUB_POINT]->(child)
+                """)
+                sync_results.append({"action": "created", "knowledge_point": "倒装句", "id": "kp_inversion_sync"})
+            else:
+                sync_results.append({"action": "exists", "knowledge_point": "倒装句", "id": existing["id"]})
+            
+            # 检查并添加虚拟语气
+            result = session.run("MATCH (kp:KnowledgePoint {name: '虚拟语气'}) RETURN kp.id as id")
+            existing = result.single()
+            if not existing:
+                session.run("""
+                    CREATE (kp:KnowledgePoint {
+                        id: 'kp_subjunctive_sync',
+                        name: '虚拟语气',
+                        description: '虚拟语气表示假设、愿望、建议等非真实的情况',
+                        difficulty: 'hard',
+                        grade_levels: ['高中一年级', '高中二年级', '高中三年级'],
+                        learning_objectives: ['掌握虚拟语气的基本形式', '理解虚拟语气的使用场景']
+                    })
+                """)
+                session.run("""
+                    MATCH (parent:KnowledgePoint {name: '动词时态'})
+                    MATCH (child:KnowledgePoint {name: '虚拟语气'})
+                    MERGE (parent)-[:HAS_SUB_POINT]->(child)
+                """)
+                sync_results.append({"action": "created", "knowledge_point": "虚拟语气", "id": "kp_subjunctive_sync"})
+            else:
+                sync_results.append({"action": "exists", "knowledge_point": "虚拟语气", "id": existing["id"]})
+        
+        return {
+            "message": "数据库同步完成",
+            "sync_results": sync_results
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"数据库同步失败: {str(e)}")

@@ -150,6 +150,13 @@ class NLPService:
                         for record in result:
                             kp_id_map[record["name"]] = record["id"]
                         logger.info(f"成功获取知识点ID映射，共{len(kp_id_map)}个知识点")
+                        # 记录重要知识点的映射情况
+                        important_kps = ["情态动词", "倒装句", "虚拟语气", "非谓语动词"]
+                        for kp in important_kps:
+                            if kp in kp_id_map:
+                                logger.info(f"找到知识点 {kp}: {kp_id_map[kp]}")
+                            else:
+                                logger.warning(f"未找到知识点: {kp}")
                 else:
                     logger.warning("数据库连接未建立，无法获取知识点ID映射")
             except Exception as e:
@@ -381,11 +388,25 @@ class NLPService:
             if any(indicator in stem_lower for indicator in perfect_indicators):
                 return 0.9
             
-            # 检查ever/never在完成时语境中的使用
+            # 检查ever/never在完成时语境中的使用，但要排除倒装句
+            # 倒装句特征：Never/Ever + 助动词 + 主语 + 动词
+            inversion_pattern = r'\b(never|ever)\s+(have|has|do|does|did|will|would|can|could|may|might|must|should)\s+\w+'
+            if re.search(inversion_pattern, stem_lower):
+                # 这是倒装句，不是现在完成时
+                return 0.0
+            
+            # 正常的现在完成时：主语 + have/has + never/ever + 过去分词
             if "ever" in stem_lower and ("have" in stem_lower or "has" in stem_lower):
-                return 0.9
+                # 检查是否是正常语序：I have ever seen
+                normal_perfect_pattern = r'\b(i|you|we|they|he|she|it|\w+)\s+(have|has)\s+(never|ever)'
+                if re.search(normal_perfect_pattern, stem_lower):
+                    return 0.9
+            
             if "never" in stem_lower and ("have" in stem_lower or "has" in stem_lower):
-                return 0.9
+                # 检查是否是正常语序：I have never seen
+                normal_perfect_pattern = r'\b(i|you|we|they|he|she|it|\w+)\s+(have|has)\s+(never|ever)'
+                if re.search(normal_perfect_pattern, stem_lower):
+                    return 0.9
             
             return 0.0
         
@@ -445,31 +466,43 @@ class NLPService:
             return 0.0
         
         elif knowledge_point == "倒装句":
-            # 检查倒装句标志词和结构
+            # 检查倒装句标志词和结构 - 优化识别逻辑
             inversion_indicators = ["never", "seldom", "rarely", "hardly", "scarcely", "barely", "no sooner", "not only", "not until", "only"]
-            if any(indicator in stem_lower for indicator in inversion_indicators):
-                return 0.95  # 提高倒装句的优先级
             
-            # 检查部分倒装结构 (助动词/情态动词/be动词 + 主语)
-            partial_inversion_patterns = [
-                r'\b(do|does|did|have|has|had|will|would|can|could|may|might|must|should|is|are|was|were)\s+\w+',
-                r'\b(never|seldom|rarely|hardly|scarcely|barely)\s+\w+',
-                r'\b(not only|not until|only)\s+\w+'
+            # 首先检查明确的倒装结构
+            # Never/Seldom/Rarely + 助动词 + 主语 + 动词
+            strong_inversion_patterns = [
+                r'\b(never|seldom|rarely|hardly|scarcely|barely)\s+(have|has|do|does|did|will|would|can|could|may|might|must|should|is|are|was|were)\s+\w+',
+                r'\b(no sooner|not only|not until)\s+(had|have|has|do|does|did|will|would|can|could|may|might|must|should|is|are|was|were)\s+\w+',
+                r'\bonly\s+(when|if|after|before)\s+.*\s+(do|does|did|have|has|had|will|would|can|could|may|might|must|should|is|are|was|were)\s+\w+'
             ]
             
-            for pattern in partial_inversion_patterns:
+            for pattern in strong_inversion_patterns:
                 if re.search(pattern, stem_lower):
-                    return 0.9
+                    return 0.98  # 非常高的置信度
+            
+            # 检查标志词后跟助动词的情况
+            for indicator in inversion_indicators:
+                if indicator in stem_lower:
+                    # 检查是否紧跟助动词
+                    inversion_check = f"{indicator} " in stem_lower
+                    if inversion_check:
+                        # 进一步验证倒装结构
+                        words_after_indicator = stem_lower.split(indicator, 1)
+                        if len(words_after_indicator) > 1:
+                            following_words = words_after_indicator[1].strip().split()
+                            if following_words and following_words[0] in ["have", "has", "do", "does", "did", "will", "would", "can", "could", "may", "might", "must", "should", "is", "are", "was", "were"]:
+                                return 0.95
             
             # 检查完全倒装结构 (地点/时间副词 + 动词 + 主语)
             full_inversion_patterns = [
-                r'\b(here|there|now|then|thus|hence|therefore)\s+\w+',
-                r'\b(up|down|in|out|away|back)\s+\w+'
+                r'\b(here|there|now|then|thus|hence|therefore)\s+(comes?|goes?|stands?|sits?|lies?|runs?)\s+\w+',
+                r'\b(up|down|in|out|away|back)\s+(goes?|comes?|runs?|flies?)\s+\w+'
             ]
             
             for pattern in full_inversion_patterns:
                 if re.search(pattern, stem_lower):
-                    return 0.85
+                    return 0.9
             
             return 0.0
         
@@ -494,12 +527,21 @@ class NLPService:
             return 0.0
         
         elif knowledge_point == "情态动词":
-            # 检查情态动词
-            modal_verbs = ["can", "could", "may", "might", "must", "should", "would", "will", "shall", "ought to", "have to", "be able to", "be supposed to"]
-            if any(modal in stem_lower for modal in modal_verbs):
-                return 0.8
+            # 检查情态动词 - 提高识别准确性
+            modal_verbs = ["can", "could", "may", "might", "must", "should", "would", "will", "shall"]
+            modal_phrases = ["ought to", "have to", "be able to", "be supposed to"]
             
-            # 检查情态动词的特殊用法
+            # 检查基础情态动词
+            for modal in modal_verbs:
+                if f" {modal} " in f" {stem_lower} " or stem_lower.startswith(f"{modal} "):
+                    return 0.95  # 高置信度
+            
+            # 检查情态动词短语
+            for phrase in modal_phrases:
+                if phrase in stem_lower:
+                    return 0.9
+            
+            # 检查情态动词的特殊用法模式
             modal_patterns = [
                 r'\b(can|could|may|might|must|should|would|will|shall)\s+\w+',
                 r'\b(ought to|have to|be able to|be supposed to)\s+\w+',
