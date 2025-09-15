@@ -235,18 +235,27 @@ class NLPService:
                     linguistic_score = self._analyze_linguistic_features(question_stem, kp_name)
                     type_score = self._question_type_score(question_type, kp_name)
                     
-                    # 优化分数计算逻辑
-                    if linguistic_score > 0.5:
-                        # 语言特征强时，优先考虑语言特征
-                        total_score = linguistic_score * 0.7 + keyword_score * 0.2 + type_score * 0.1
-                    elif keyword_score > 0.3:
-                        # 关键词匹配较好时，平衡考虑
-                        total_score = keyword_score * 0.6 + linguistic_score * 0.3 + type_score * 0.1
+                    # 优化分数计算逻辑 - 特别处理重要语法结构
+                    if kp_name in ["情态动词", "倒装句"]:
+                        # 对于重要语法结构，降低阈值并优化权重
+                        if linguistic_score > 0.8:
+                            total_score = linguistic_score * 0.8 + keyword_score * 0.15 + type_score * 0.05
+                        elif linguistic_score > 0.5:
+                            total_score = linguistic_score * 0.7 + keyword_score * 0.25 + type_score * 0.05
+                        else:
+                            total_score = keyword_score * 0.6 + linguistic_score * 0.35 + type_score * 0.05
+                        threshold = 0.1  # 降低阈值
                     else:
-                        # 基础匹配
-                        total_score = keyword_score * 0.5 + linguistic_score * 0.3 + type_score * 0.2
+                        # 其他知识点使用原有逻辑
+                        if linguistic_score > 0.5:
+                            total_score = linguistic_score * 0.7 + keyword_score * 0.2 + type_score * 0.1
+                        elif keyword_score > 0.3:
+                            total_score = keyword_score * 0.6 + linguistic_score * 0.3 + type_score * 0.1
+                        else:
+                            total_score = keyword_score * 0.5 + linguistic_score * 0.3 + type_score * 0.2
+                        threshold = 0.15
                     
-                    if total_score > 0.15:  # 提高阈值，减少误匹配
+                    if total_score > threshold:
                         kp_id = kp_id_map.get(kp_name, f"kp_{kp_name.replace(' ', '_')}")
                         logger.info(f"知识点 {kp_name} 匹配成功: 总分={total_score:.3f}, ID={kp_id}")
                         
@@ -393,6 +402,10 @@ class NLPService:
             inversion_pattern = r'\b(never|ever)\s+(have|has|do|does|did|will|would|can|could|may|might|must|should)\s+\w+'
             if re.search(inversion_pattern, stem_lower):
                 # 这是倒装句，不是现在完成时
+                return 0.0
+            
+            # 特别检查"Never have I"这种明显的倒装结构
+            if re.search(r'\bnever\s+have\s+i\b', stem_lower):
                 return 0.0
             
             # 正常的现在完成时：主语 + have/has + never/ever + 过去分词
