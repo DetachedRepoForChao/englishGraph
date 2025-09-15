@@ -6,7 +6,7 @@
 import requests
 import time
 
-API_BASE = "https://english-knowledge-graph-hkxkycm1m-chao-wangs-projects-dfded257.vercel.app"
+API_BASE = "https://english-knowledge-graph-bf3uxw4hl-chao-wangs-projects-dfded257.vercel.app"
 
 def test_user_questions():
     """测试用户提供的10个题目"""
