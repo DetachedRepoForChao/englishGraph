@@ -1,0 +1,706 @@
+{
+  "knowledge_points": [
+    {
+      "id": "kp_588066",
+      "name": "一般现在时",
+      "description": "表示经常性、习惯性的动作或状态",
+      "difficulty": "easy",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "一般现在时",
+        "present simple"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_2925",
+      "name": "一般过去时",
+      "description": "表示过去发生的动作或状态",
+      "difficulty": "easy",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "一般过去时",
+        "past simple"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_472230",
+      "name": "介词",
+      "description": "表示名词、代词等与句中其他词的关系的词",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "in",
+        "on",
+        "at",
+        "by",
+        "for",
+        "with",
+        "from",
+        "to",
+        "of",
+        "about",
+        "under",
+        "over",
+        "above",
+        "below",
+        "between",
+        "among",
+        "through",
+        "interested in",
+        "good at",
+        "afraid of",
+        "proud of",
+        "famous for",
+        "介词",
+        "前置词",
+        "preposition",
+        "介词短语",
+        "固定搭配",
+        "_____ in",
+        "_____ on",
+        "_____ at",
+        "_____ by",
+        "_____ for",
+        "A) in B) on C) at D) by",
+        "介词选择",
+        "介词填空"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_inversion",
+      "name": "倒装句",
+      "description": "倒装句是指将谓语动词或助动词提到主语之前的句子结构",
+      "difficulty": "hard",
+      "grade_levels": [
+        "高中一年级",
+        "高中二年级",
+        "高中三年级"
+      ],
+      "learning_objectives": [
+        "掌握部分倒装的结构",
+        "理解完全倒装的使用场景"
+      ],
+      "cefr_level": null,
+      "keywords": [],
+      "source": null
+    },
+    {
+      "id": "kp_573225",
+      "name": "动词时态",
+      "description": "动词的各种时态形式",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "动词",
+        "时态",
+        "tense"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_969701",
+      "name": "定语从句",
+      "description": "用来修饰名词或代词的从句",
+      "difficulty": "hard",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "who",
+        "which",
+        "that",
+        "whom",
+        "whose",
+        "where",
+        "when",
+        "关系代词",
+        "先行词"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_980608",
+      "name": "宾语从句",
+      "description": "在句子中作宾语的从句",
+      "difficulty": "hard",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "that",
+        "whether",
+        "if",
+        "what",
+        "when",
+        "where",
+        "why",
+        "how",
+        "宾语从句",
+        "引导词"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_modal_verbs",
+      "name": "情态动词",
+      "description": "情态动词表示说话人的态度、推测、能力、必要性等",
+      "difficulty": "medium",
+      "grade_levels": [
+        "初中二年级",
+        "初中三年级",
+        "高中一年级"
+      ],
+      "learning_objectives": [
+        "掌握情态动词的基本用法",
+        "理解情态动词的推测用法"
+      ],
+      "cefr_level": null,
+      "keywords": [],
+      "source": null
+    },
+    {
+      "id": "kp_793115",
+      "name": "比较级和最高级",
+      "description": "形容词和副词的比较形式",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "than",
+        "more",
+        "most",
+        "-er",
+        "-est",
+        "better",
+        "best",
+        "比较级",
+        "最高级"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_441152",
+      "name": "现在完成时",
+      "description": "表示过去发生的动作对现在造成的影响或结果",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "have",
+        "has",
+        "already",
+        "yet",
+        "just",
+        "ever",
+        "never",
+        "since",
+        "for"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_605632",
+      "name": "现在进行时",
+      "description": "表示现在正在进行的动作",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "现在进行时",
+        "present continuous"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_115430",
+      "name": "英语语法",
+      "description": "英语语法基础知识",
+      "difficulty": "medium",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "语法",
+        "grammar"
+      ],
+      "source": null
+    },
+    {
+      "id": "kp_subjunctive",
+      "name": "虚拟语气",
+      "description": "虚拟语气表示假设、愿望、建议等非真实的情况",
+      "difficulty": "hard",
+      "grade_levels": [
+        "高中一年级",
+        "高中二年级",
+        "高中三年级"
+      ],
+      "learning_objectives": [
+        "掌握虚拟语气的基本形式",
+        "理解虚拟语气的使用场景"
+      ],
+      "cefr_level": null,
+      "keywords": [],
+      "source": null
+    },
+    {
+      "id": "kp_199751",
+      "name": "被动语态",
+      "description": "表示主语是动作的承受者",
+      "difficulty": "hard",
+      "grade_levels": [],
+      "learning_objectives": [],
+      "cefr_level": null,
+      "keywords": [
+        "be动词",
+        "过去分词",
+        "by",
+        "was",
+        "were",
+        "is",
+        "are",
+        "被动",
+        "passive"
+      ],
+      "source": null
+    }
+  ],
+  "relationships": [
+    {
+      "parent_id": "kp_573225",
+      "parent_name": "动词时态",
+      "child_id": "kp_588066",
+      "child_name": "一般现在时",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_573225",
+      "parent_name": "动词时态",
+      "child_id": "kp_2925",
+      "child_name": "一般过去时",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_573225",
+      "parent_name": "动词时态",
+      "child_id": "kp_605632",
+      "child_name": "现在进行时",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_115430",
+      "parent_name": "英语语法",
+      "child_id": "kp_inversion",
+      "child_name": "倒装句",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_115430",
+      "parent_name": "英语语法",
+      "child_id": "kp_573225",
+      "child_name": "动词时态",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_115430",
+      "parent_name": "英语语法",
+      "child_id": "kp_modal_verbs",
+      "child_name": "情态动词",
+      "relationship_type": "HAS_SUB_POINT"
+    },
+    {
+      "parent_id": "kp_115430",
+      "parent_name": "英语语法",
+      "child_id": "kp_subjunctive",
+      "child_name": "虚拟语气",
+      "relationship_type": "HAS_SUB_POINT"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_182690",
+      "content": "I _____ to Beijing last summer vacation. A) go B) goes C) went D) will go",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "C",
+      "options": [
+        "go",
+        "goes",
+        "went",
+        "will go"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_184500",
+      "content": "This apple is _____ than that one. A) sweet B) sweeter C) sweetest D) the sweetest",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "B",
+      "options": [
+        "sweet",
+        "sweeter",
+        "sweetest",
+        "the sweetest"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_2085",
+      "content": "The windows _____ by the students yesterday. A) cleaned B) were cleaned C) are cleaned D) clean",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "B",
+      "options": [
+        "cleaned",
+        "were cleaned",
+        "are cleaned",
+        "clean"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_293508",
+      "content": "The book _____ is on the table belongs to me. A) who B) which C) where D) when",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "B",
+      "options": [
+        "who",
+        "which",
+        "where",
+        "when"
+      ],
+      "source": "人教版初中英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_321432",
+      "content": "Could you tell me _____ the library is? A) where B) what C) how D) why",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "A",
+      "options": [
+        "where",
+        "what",
+        "how",
+        "why"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_354107",
+      "content": "This book is _____ than that one. A) good B) better C) best D) the best",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "B",
+      "options": [
+        "good",
+        "better",
+        "best",
+        "the best"
+      ],
+      "source": "人教版小学英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_381551",
+      "content": "My sister _____ her homework every evening. A) do B) does C) doing D) did",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "B",
+      "options": [
+        "do",
+        "does",
+        "doing",
+        "did"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_403468",
+      "content": "Can you tell me _____ the nearest hospital is? A) where B) what C) how D) why",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "A",
+      "options": [
+        "where",
+        "what",
+        "how",
+        "why"
+      ],
+      "source": "人教版初中英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_43661",
+      "content": "She is more beautiful than her sister.",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "more beautiful",
+      "options": [],
+      "source": null,
+      "grade_level": null
+    },
+    {
+      "id": "q_554737",
+      "content": "If it _____ tomorrow, we will stay at home. A) rain B) rains C) will rain D) rained",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "B",
+      "options": [
+        "rain",
+        "rains",
+        "will rain",
+        "rained"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_674394",
+      "content": "I have _____ finished my homework. A) already B) yet C) just D) ever",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "A",
+      "options": [
+        "already",
+        "yet",
+        "just",
+        "ever"
+      ],
+      "source": "人教版初中英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_674976",
+      "content": "She _____ to school every day. A) go B) goes C) going D) gone",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "B",
+      "options": [
+        "go",
+        "goes",
+        "going",
+        "gone"
+      ],
+      "source": "人教版小学英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_685858",
+      "content": "If it rains tomorrow, we will stay at home.",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "rains",
+      "options": [],
+      "source": null,
+      "grade_level": null
+    },
+    {
+      "id": "q_692469",
+      "content": "Look! The children _____ in the playground. A) play B) plays C) are playing D) played",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "C",
+      "options": [
+        "play",
+        "plays",
+        "are playing",
+        "played"
+      ],
+      "source": "人教版小学英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_717843",
+      "content": "Fill in the blank: I'm good _____ playing basketball.",
+      "question_type": "填空题",
+      "difficulty": "medium",
+      "answer": "at",
+      "options": [],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_776074",
+      "content": "Translate: 如果我有时间，我会帮助你。",
+      "question_type": "翻译题",
+      "difficulty": "hard",
+      "answer": "If I have time, I will help you.",
+      "options": [],
+      "source": "人教版初中英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_83759",
+      "content": "She has _____ lived in Shanghai for 5 years. A) already B) yet C) just D) never",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "A",
+      "options": [
+        "already",
+        "yet",
+        "just",
+        "never"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_844018",
+      "content": "The man _____ is wearing a blue shirt is my teacher. A) who B) which C) where D) when",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "A",
+      "options": [
+        "who",
+        "which",
+        "where",
+        "when"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_8457",
+      "content": "Look! The birds _____ in the sky. A) fly B) flies C) are flying D) flew",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "C",
+      "options": [
+        "fly",
+        "flies",
+        "are flying",
+        "flew"
+      ],
+      "source": "AI Agent测试题目",
+      "grade_level": null
+    },
+    {
+      "id": "q_894204",
+      "content": "Yesterday I _____ to the park with my friends. A) go B) went C) going D) will go",
+      "question_type": "选择题",
+      "difficulty": "easy",
+      "answer": "B",
+      "options": [
+        "go",
+        "went",
+        "going",
+        "will go"
+      ],
+      "source": "人教版小学英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_898687",
+      "content": "Could you tell me where the library is?",
+      "question_type": "选择题",
+      "difficulty": "medium",
+      "answer": "where",
+      "options": [],
+      "source": null,
+      "grade_level": null
+    },
+    {
+      "id": "q_909157",
+      "content": "The letter _____ by Tom yesterday. A) wrote B) was written C) is written D) writes",
+      "question_type": "选择题",
+      "difficulty": "hard",
+      "answer": "B",
+      "options": [
+        "wrote",
+        "was written",
+        "is written",
+        "writes"
+      ],
+      "source": "人教版初中英语",
+      "grade_level": null
+    },
+    {
+      "id": "q_992293",
+      "content": "Fill in the blank: I am interested _____ learning English.",
+      "question_type": "填空题",
+      "difficulty": "medium",
+      "answer": "in",
+      "options": [],
+      "source": "人教版初中英语",
+      "grade_level": null
+    }
+  ],
+  "annotations": [
+    {
+      "question_id": "q_674394",
+      "knowledge_point_id": "kp_573225",
+      "knowledge_point_name": "动词时态",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_674976",
+      "knowledge_point_id": "kp_588066",
+      "knowledge_point_name": "一般现在时",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_674976",
+      "knowledge_point_id": "kp_573225",
+      "knowledge_point_name": "动词时态",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_692469",
+      "knowledge_point_id": "kp_605632",
+      "knowledge_point_name": "现在进行时",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_692469",
+      "knowledge_point_id": "kp_573225",
+      "knowledge_point_name": "动词时态",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_776074",
+      "knowledge_point_id": "kp_588066",
+      "knowledge_point_name": "一般现在时",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_894204",
+      "knowledge_point_id": "kp_2925",
+      "knowledge_point_name": "一般过去时",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_894204",
+      "knowledge_point_id": "kp_573225",
+      "knowledge_point_name": "动词时态",
+      "relationship_type": "TESTS"
+    },
+    {
+      "question_id": "q_909157",
+      "knowledge_point_id": "kp_2925",
+      "knowledge_point_name": "一般过去时",
+      "relationship_type": "TESTS"
+    }
+  ]
+}

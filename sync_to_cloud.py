@@ -1,342 +1,398 @@
 #!/usr/bin/env python3
 """
-本地数据同步到Neo4j AuraDB云数据库脚本
+云端数据库同步脚本
+自动生成，用于将本地数据同步到云端
 """
-import sys
 import os
 from neo4j import GraphDatabase
-import logging
-import json
-from typing import List, Dict, Any
 
-# 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# 本地数据库配置
-LOCAL_NEO4J_URI = "bolt://localhost:7687"
-LOCAL_NEO4J_USERNAME = "neo4j"
-LOCAL_NEO4J_PASSWORD = "knowledge123"
-
-# 云数据库配置
-CLOUD_NEO4J_URI = "neo4j+s://383b0a61.databases.neo4j.io"
-CLOUD_NEO4J_USERNAME = "neo4j"
-CLOUD_NEO4J_PASSWORD = "AYD98-e0kiI3v_sshk3yLWSEkXg-bzL5E3SW0DnrYCI"
-
-class DataSyncService:
-    def __init__(self):
-        self.local_driver = None
-        self.cloud_driver = None
+def sync_to_cloud():
+    """同步数据到云端数据库"""
     
-    def connect_databases(self):
-        """连接本地和云数据库"""
-        try:
-            # 连接本地数据库
-            logger.info("🔌 连接本地Neo4j数据库...")
-            self.local_driver = GraphDatabase.driver(
-                LOCAL_NEO4J_URI, 
-                auth=(LOCAL_NEO4J_USERNAME, LOCAL_NEO4J_PASSWORD)
-            )
-            
-            # 测试本地连接
-            with self.local_driver.session() as session:
-                session.run("RETURN 1")
-            logger.info("✅ 本地数据库连接成功")
-            
-            # 连接云数据库
-            logger.info("☁️ 连接Neo4j AuraDB云数据库...")
-            self.cloud_driver = GraphDatabase.driver(
-                CLOUD_NEO4J_URI,
-                auth=(CLOUD_NEO4J_USERNAME, CLOUD_NEO4J_PASSWORD)
-            )
-            
-            # 测试云连接
-            with self.cloud_driver.session() as session:
-                session.run("RETURN 1")
-            logger.info("✅ 云数据库连接成功")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ 数据库连接失败: {e}")
-            return False
+    # 云端数据库连接信息（请根据实际情况修改）
+    NEO4J_URI = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
+    NEO4J_USERNAME = os.getenv('NEO4J_USERNAME', 'neo4j')
+    NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'knowledge123')
     
-    def export_local_data(self):
-        """从本地数据库导出所有数据"""
-        logger.info("📤 导出本地数据...")
-        
-        data = {
-            "knowledge_points": [],
-            "questions": [],
-            "relationships": []
-        }
-        
-        try:
-            with self.local_driver.session() as session:
-                # 导出知识点
-                logger.info("📚 导出知识点...")
-                kp_result = session.run("""
-                    MATCH (kp:KnowledgePoint)
-                    RETURN kp.id as id, kp.name as name, kp.description as description,
-                           kp.level as level, kp.difficulty as difficulty, kp.keywords as keywords
-                """)
-                
-                for record in kp_result:
-                    kp_data = {
-                        "id": record["id"],
-                        "name": record["name"],
-                        "description": record["description"],
-                        "level": record["level"],
-                        "difficulty": record["difficulty"],
-                        "keywords": record["keywords"] or []
-                    }
-                    data["knowledge_points"].append(kp_data)
-                
-                logger.info(f"✅ 导出了 {len(data['knowledge_points'])} 个知识点")
-                
-                # 导出题目
-                logger.info("📝 导出题目...")
-                q_result = session.run("""
-                    MATCH (q:Question)
-                    RETURN q.id as id, q.content as content, q.question_type as question_type,
-                           q.options as options, q.answer as answer, q.analysis as analysis,
-                           q.source as source, q.difficulty as difficulty
-                """)
-                
-                for record in q_result:
-                    q_data = {
-                        "id": record["id"],
-                        "content": record["content"],
-                        "question_type": record["question_type"],
-                        "options": record["options"] or [],
-                        "answer": record["answer"],
-                        "analysis": record["analysis"],
-                        "source": record["source"],
-                        "difficulty": record["difficulty"]
-                    }
-                    data["questions"].append(q_data)
-                
-                logger.info(f"✅ 导出了 {len(data['questions'])} 道题目")
-                
-                # 导出关系
-                logger.info("🔗 导出关系...")
-                rel_result = session.run("""
-                    MATCH (q:Question)-[r:TESTS]->(kp:KnowledgePoint)
-                    RETURN q.id as question_id, kp.id as kp_id, r.weight as weight
-                """)
-                
-                for record in rel_result:
-                    rel_data = {
-                        "question_id": record["question_id"],
-                        "kp_id": record["kp_id"],
-                        "weight": record["weight"]
-                    }
-                    data["relationships"].append(rel_data)
-                
-                logger.info(f"✅ 导出了 {len(data['relationships'])} 个关系")
-                
-                # 导出知识点层级关系
-                hierarchy_result = session.run("""
-                    MATCH (parent:KnowledgePoint)-[r:HAS_SUB_POINT]->(child:KnowledgePoint)
-                    RETURN parent.id as parent_id, child.id as child_id
-                """)
-                
-                hierarchy_data = []
-                for record in hierarchy_result:
-                    hierarchy_data.append({
-                        "parent_id": record["parent_id"],
-                        "child_id": record["child_id"]
-                    })
-                
-                data["hierarchy"] = hierarchy_data
-                logger.info(f"✅ 导出了 {len(hierarchy_data)} 个层级关系")
-                
-            return data
-            
-        except Exception as e:
-            logger.error(f"❌ 导出数据失败: {e}")
-            return None
+    print(f"🔗 连接云端数据库: {NEO4J_URI}")
     
-    def clear_cloud_database(self):
-        """清空云数据库"""
-        logger.info("🗑️ 清空云数据库...")
-        
-        try:
-            with self.cloud_driver.session() as session:
-                # 删除所有节点和关系
-                session.run("MATCH (n) DETACH DELETE n")
-                logger.info("✅ 云数据库已清空")
-                return True
-        except Exception as e:
-            logger.error(f"❌ 清空云数据库失败: {e}")
-            return False
-    
-    def import_to_cloud(self, data: Dict[str, Any]):
-        """将数据导入到云数据库"""
-        logger.info("📥 导入数据到云数据库...")
-        
-        try:
-            with self.cloud_driver.session() as session:
-                # 创建约束和索引
-                logger.info("🔧 创建约束和索引...")
-                constraints = [
-                    "CREATE CONSTRAINT knowledge_point_id IF NOT EXISTS FOR (kp:KnowledgePoint) REQUIRE kp.id IS UNIQUE",
-                    "CREATE CONSTRAINT question_id IF NOT EXISTS FOR (q:Question) REQUIRE q.id IS UNIQUE"
-                ]
-                
-                for constraint in constraints:
-                    try:
-                        session.run(constraint)
-                    except Exception as e:
-                        logger.warning(f"约束创建警告: {e}")
-                
-                # 导入知识点
-                logger.info("📚 导入知识点...")
-                for kp in data["knowledge_points"]:
-                    session.run("""
-                        CREATE (kp:KnowledgePoint {
-                            id: $id,
-                            name: $name,
-                            description: $description,
-                            level: $level,
-                            difficulty: $difficulty,
-                            keywords: $keywords
-                        })
-                    """, kp)
-                
-                logger.info(f"✅ 导入了 {len(data['knowledge_points'])} 个知识点")
-                
-                # 导入题目
-                logger.info("📝 导入题目...")
-                for q in data["questions"]:
-                    session.run("""
-                        CREATE (q:Question {
-                            id: $id,
-                            content: $content,
-                            question_type: $question_type,
-                            options: $options,
-                            answer: $answer,
-                            analysis: $analysis,
-                            source: $source,
-                            difficulty: $difficulty
-                        })
-                    """, q)
-                
-                logger.info(f"✅ 导入了 {len(data['questions'])} 道题目")
-                
-                # 创建TESTS关系
-                logger.info("🔗 创建题目-知识点关系...")
-                for rel in data["relationships"]:
-                    session.run("""
-                        MATCH (q:Question {id: $question_id})
-                        MATCH (kp:KnowledgePoint {id: $kp_id})
-                        CREATE (q)-[:TESTS {weight: $weight}]->(kp)
-                    """, rel)
-                
-                logger.info(f"✅ 创建了 {len(data['relationships'])} 个TESTS关系")
-                
-                # 创建知识点层级关系
-                if "hierarchy" in data and data["hierarchy"]:
-                    logger.info("🏗️ 创建知识点层级关系...")
-                    for hier in data["hierarchy"]:
-                        session.run("""
-                            MATCH (parent:KnowledgePoint {id: $parent_id})
-                            MATCH (child:KnowledgePoint {id: $child_id})
-                            CREATE (parent)-[:HAS_SUB_POINT]->(child)
-                        """, hier)
-                    
-                    logger.info(f"✅ 创建了 {len(data['hierarchy'])} 个层级关系")
-                
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ 导入数据失败: {e}")
-            return False
-    
-    def verify_sync(self):
-        """验证同步结果"""
-        logger.info("🔍 验证同步结果...")
-        
-        try:
-            with self.cloud_driver.session() as session:
-                # 统计云数据库中的数据
-                stats = {}
-                
-                # 知识点数量
-                kp_result = session.run("MATCH (kp:KnowledgePoint) RETURN count(kp) as count")
-                stats["knowledge_points"] = kp_result.single()["count"]
-                
-                # 题目数量
-                q_result = session.run("MATCH (q:Question) RETURN count(q) as count")
-                stats["questions"] = q_result.single()["count"]
-                
-                # 关系数量
-                rel_result = session.run("MATCH ()-[r:TESTS]->() RETURN count(r) as count")
-                stats["relationships"] = rel_result.single()["count"]
-                
-                # 层级关系数量
-                hier_result = session.run("MATCH ()-[r:HAS_SUB_POINT]->() RETURN count(r) as count")
-                stats["hierarchy"] = hier_result.single()["count"]
-                
-                logger.info("📊 云数据库统计:")
-                logger.info(f"   知识点: {stats['knowledge_points']} 个")
-                logger.info(f"   题目: {stats['questions']} 道")
-                logger.info(f"   TESTS关系: {stats['relationships']} 个")
-                logger.info(f"   层级关系: {stats['hierarchy']} 个")
-                
-                return stats
-                
-        except Exception as e:
-            logger.error(f"❌ 验证失败: {e}")
-            return None
-    
-    def close_connections(self):
-        """关闭数据库连接"""
-        if self.local_driver:
-            self.local_driver.close()
-        if self.cloud_driver:
-            self.cloud_driver.close()
-        logger.info("🔌 数据库连接已关闭")
-
-def main():
-    """主函数"""
-    logger.info("🚀 开始数据同步...")
-    
-    sync_service = DataSyncService()
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
     
     try:
-        # 1. 连接数据库
-        if not sync_service.connect_databases():
-            return False
-        
-        # 2. 导出本地数据
-        local_data = sync_service.export_local_data()
-        if not local_data:
-            return False
-        
-        # 3. 清空云数据库
-        if not sync_service.clear_cloud_database():
-            return False
-        
-        # 4. 导入到云数据库
-        if not sync_service.import_to_cloud(local_data):
-            return False
-        
-        # 5. 验证同步结果
-        stats = sync_service.verify_sync()
-        if not stats:
-            return False
-        
-        logger.info("🎉 数据同步完成！")
-        return True
-        
+        with driver.session() as session:
+            
+            print("🧹 清理现有数据...")
+            # 可选：清理现有数据（谨慎使用）
+            # session.run("MATCH (n) DETACH DELETE n")
+            
+            print("📝 同步知识点...")
+
+            # 创建知识点
+            knowledge_points = [
+            {
+                        "id": "kp_588066",
+                        "name": "一般现在时",
+                        "description": "表示经常性、习惯性的动作或状态",
+                        "difficulty": "easy",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "一般现在时",
+                                    "present simple"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_2925",
+                        "name": "一般过去时",
+                        "description": "表示过去发生的动作或状态",
+                        "difficulty": "easy",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "一般过去时",
+                                    "past simple"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_472230",
+                        "name": "介词",
+                        "description": "表示名词、代词等与句中其他词的关系的词",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "in",
+                                    "on",
+                                    "at",
+                                    "by",
+                                    "for",
+                                    "with",
+                                    "from",
+                                    "to",
+                                    "of",
+                                    "about",
+                                    "under",
+                                    "over",
+                                    "above",
+                                    "below",
+                                    "between",
+                                    "among",
+                                    "through",
+                                    "interested in",
+                                    "good at",
+                                    "afraid of",
+                                    "proud of",
+                                    "famous for",
+                                    "介词",
+                                    "前置词",
+                                    "preposition",
+                                    "介词短语",
+                                    "固定搭配",
+                                    "_____ in",
+                                    "_____ on",
+                                    "_____ at",
+                                    "_____ by",
+                                    "_____ for",
+                                    "A) in B) on C) at D) by",
+                                    "介词选择",
+                                    "介词填空"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_inversion",
+                        "name": "倒装句",
+                        "description": "倒装句是指将谓语动词或助动词提到主语之前的句子结构",
+                        "difficulty": "hard",
+                        "grade_levels": [
+                                    "高中一年级",
+                                    "高中二年级",
+                                    "高中三年级"
+                        ],
+                        "learning_objectives": [
+                                    "掌握部分倒装的结构",
+                                    "理解完全倒装的使用场景"
+                        ],
+                        "cefr_level": null,
+                        "keywords": [],
+                        "source": null
+            },
+            {
+                        "id": "kp_573225",
+                        "name": "动词时态",
+                        "description": "动词的各种时态形式",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "动词",
+                                    "时态",
+                                    "tense"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_969701",
+                        "name": "定语从句",
+                        "description": "用来修饰名词或代词的从句",
+                        "difficulty": "hard",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "who",
+                                    "which",
+                                    "that",
+                                    "whom",
+                                    "whose",
+                                    "where",
+                                    "when",
+                                    "关系代词",
+                                    "先行词"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_980608",
+                        "name": "宾语从句",
+                        "description": "在句子中作宾语的从句",
+                        "difficulty": "hard",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "that",
+                                    "whether",
+                                    "if",
+                                    "what",
+                                    "when",
+                                    "where",
+                                    "why",
+                                    "how",
+                                    "宾语从句",
+                                    "引导词"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_modal_verbs",
+                        "name": "情态动词",
+                        "description": "情态动词表示说话人的态度、推测、能力、必要性等",
+                        "difficulty": "medium",
+                        "grade_levels": [
+                                    "初中二年级",
+                                    "初中三年级",
+                                    "高中一年级"
+                        ],
+                        "learning_objectives": [
+                                    "掌握情态动词的基本用法",
+                                    "理解情态动词的推测用法"
+                        ],
+                        "cefr_level": null,
+                        "keywords": [],
+                        "source": null
+            },
+            {
+                        "id": "kp_793115",
+                        "name": "比较级和最高级",
+                        "description": "形容词和副词的比较形式",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "than",
+                                    "more",
+                                    "most",
+                                    "-er",
+                                    "-est",
+                                    "better",
+                                    "best",
+                                    "比较级",
+                                    "最高级"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_441152",
+                        "name": "现在完成时",
+                        "description": "表示过去发生的动作对现在造成的影响或结果",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "have",
+                                    "has",
+                                    "already",
+                                    "yet",
+                                    "just",
+                                    "ever",
+                                    "never",
+                                    "since",
+                                    "for"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_605632",
+                        "name": "现在进行时",
+                        "description": "表示现在正在进行的动作",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "现在进行时",
+                                    "present continuous"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_115430",
+                        "name": "英语语法",
+                        "description": "英语语法基础知识",
+                        "difficulty": "medium",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "语法",
+                                    "grammar"
+                        ],
+                        "source": null
+            },
+            {
+                        "id": "kp_subjunctive",
+                        "name": "虚拟语气",
+                        "description": "虚拟语气表示假设、愿望、建议等非真实的情况",
+                        "difficulty": "hard",
+                        "grade_levels": [
+                                    "高中一年级",
+                                    "高中二年级",
+                                    "高中三年级"
+                        ],
+                        "learning_objectives": [
+                                    "掌握虚拟语气的基本形式",
+                                    "理解虚拟语气的使用场景"
+                        ],
+                        "cefr_level": null,
+                        "keywords": [],
+                        "source": null
+            },
+            {
+                        "id": "kp_199751",
+                        "name": "被动语态",
+                        "description": "表示主语是动作的承受者",
+                        "difficulty": "hard",
+                        "grade_levels": [],
+                        "learning_objectives": [],
+                        "cefr_level": null,
+                        "keywords": [
+                                    "be动词",
+                                    "过去分词",
+                                    "by",
+                                    "was",
+                                    "were",
+                                    "is",
+                                    "are",
+                                    "被动",
+                                    "passive"
+                        ],
+                        "source": null
+            }
+]
+            
+            for kp in knowledge_points:
+                session.run("""
+                    MERGE (kp:KnowledgePoint {id: $id})
+                    SET kp.name = $name,
+                        kp.description = $description,
+                        kp.difficulty = $difficulty,
+                        kp.grade_levels = $grade_levels,
+                        kp.learning_objectives = $learning_objectives,
+                        kp.cefr_level = $cefr_level,
+                        kp.keywords = $keywords,
+                        kp.source = $source
+                """, kp)
+            
+            print(f"   ✅ 同步了 {len(knowledge_points)} 个知识点")
+
+            print("🔗 同步层级关系...")
+            # 创建层级关系
+            relationships = [
+            {
+                        "parent_id": "kp_573225",
+                        "parent_name": "动词时态",
+                        "child_id": "kp_588066",
+                        "child_name": "一般现在时",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_573225",
+                        "parent_name": "动词时态",
+                        "child_id": "kp_2925",
+                        "child_name": "一般过去时",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_573225",
+                        "parent_name": "动词时态",
+                        "child_id": "kp_605632",
+                        "child_name": "现在进行时",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_115430",
+                        "parent_name": "英语语法",
+                        "child_id": "kp_inversion",
+                        "child_name": "倒装句",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_115430",
+                        "parent_name": "英语语法",
+                        "child_id": "kp_573225",
+                        "child_name": "动词时态",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_115430",
+                        "parent_name": "英语语法",
+                        "child_id": "kp_modal_verbs",
+                        "child_name": "情态动词",
+                        "relationship_type": "HAS_SUB_POINT"
+            },
+            {
+                        "parent_id": "kp_115430",
+                        "parent_name": "英语语法",
+                        "child_id": "kp_subjunctive",
+                        "child_name": "虚拟语气",
+                        "relationship_type": "HAS_SUB_POINT"
+            }
+]
+            
+            for rel in relationships:
+                session.run("""
+                    MATCH (parent:KnowledgePoint {id: $parent_id})
+                    MATCH (child:KnowledgePoint {id: $child_id})
+                    MERGE (parent)-[:HAS_SUB_POINT]->(child)
+                """, rel)
+            
+            print(f"   ✅ 同步了 {len(relationships)} 个层级关系")
+
+            print("✅ 数据同步完成！")
+            
     except Exception as e:
-        logger.error(f"❌ 同步过程出错: {e}")
-        return False
-    
+        print(f"❌ 同步失败: {e}")
     finally:
-        sync_service.close_connections()
+        driver.close()
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    sync_to_cloud()

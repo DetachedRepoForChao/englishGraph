@@ -650,14 +650,135 @@ async function addKnowledgePoint() {
 // 加载知识点层级结构
 async function loadKnowledgeHierarchy() {
     try {
+        showLoading('knowledge-hierarchy');
         const response = await fetch(`${API_BASE_URL}/knowledge/hierarchy/tree`);
         const data = await response.json();
         
-        // TODO: 实现层级结构可视化
         console.log('知识点层级结构:', data.hierarchy);
+        displayKnowledgeHierarchy(data);
     } catch (error) {
         console.error('加载知识点层级失败:', error);
+        showError('knowledge-hierarchy', '加载知识点层级失败');
     }
+}
+
+// 显示知识点层级结构
+function displayKnowledgeHierarchy(data) {
+    const container = document.getElementById('knowledge-hierarchy');
+    
+    if (!data.hierarchy || data.hierarchy.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-sitemap fa-3x mb-3"></i>
+                <p>暂无知识点层级数据</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 构建层级树结构
+    const hierarchyMap = new Map();
+    const rootNodes = new Set();
+    
+    // 处理层级数据
+    data.hierarchy.forEach(item => {
+        const parentName = item.parent_name;
+        const childName = item.child_name;
+        
+        if (!hierarchyMap.has(parentName)) {
+            hierarchyMap.set(parentName, {
+                name: parentName,
+                id: item.parent_id,
+                children: []
+            });
+        }
+        
+        hierarchyMap.get(parentName).children.push({
+            name: childName,
+            id: item.child_id
+        });
+        
+        // 记录所有出现的节点
+        rootNodes.add(parentName);
+    });
+    
+    // 找到真正的根节点（不作为任何节点的子节点）
+    const childNodes = new Set();
+    data.hierarchy.forEach(item => {
+        childNodes.add(item.child_name);
+    });
+    
+    const realRootNodes = Array.from(rootNodes).filter(node => !childNodes.has(node));
+    
+    // 生成HTML
+    let hierarchyHTML = `
+        <div class="hierarchy-container">
+            <div class="hierarchy-header mb-3">
+                <h6><i class="fas fa-sitemap me-2"></i>知识点层级结构</h6>
+                <div class="hierarchy-stats">
+                    <span class="badge bg-primary me-2">总节点: ${hierarchyMap.size}</span>
+                    <span class="badge bg-success me-2">关系: ${data.hierarchy.length}</span>
+                    <span class="badge bg-info">根节点: ${realRootNodes.length}</span>
+                </div>
+            </div>
+            <div class="hierarchy-tree">
+    `;
+    
+    // 渲染根节点及其子树
+    realRootNodes.forEach(rootName => {
+        if (hierarchyMap.has(rootName)) {
+            hierarchyHTML += generateTreeNode(hierarchyMap.get(rootName), hierarchyMap, 0);
+        }
+    });
+    
+    hierarchyHTML += `
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = hierarchyHTML;
+}
+
+// 生成树节点HTML
+function generateTreeNode(node, hierarchyMap, level) {
+    const indent = '  '.repeat(level);
+    const hasChildren = node.children && node.children.length > 0;
+    
+    let nodeHTML = `
+        <div class="tree-node" style="margin-left: ${level * 20}px;">
+            <div class="node-content">
+                <i class="fas fa-${hasChildren ? 'folder' : 'file'} me-2"></i>
+                <strong>${node.name}</strong>
+                <span class="text-muted ms-2">(${node.id})</span>
+                ${hasChildren ? `<span class="badge bg-secondary ms-2">${node.children.length}</span>` : ''}
+            </div>
+    `;
+    
+    // 渲染子节点
+    if (hasChildren) {
+        nodeHTML += '<div class="node-children">';
+        node.children.forEach(child => {
+            if (hierarchyMap.has(child.name)) {
+                // 如果子节点也有子节点，递归渲染
+                nodeHTML += generateTreeNode(hierarchyMap.get(child.name), hierarchyMap, level + 1);
+            } else {
+                // 叶子节点
+                nodeHTML += `
+                    <div class="tree-node" style="margin-left: ${(level + 1) * 20}px;">
+                        <div class="node-content">
+                            <i class="fas fa-file me-2"></i>
+                            ${child.name}
+                            <span class="text-muted ms-2">(${child.id})</span>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        nodeHTML += '</div>';
+    }
+    
+    nodeHTML += '</div>';
+    return nodeHTML;
 }
 
 // 工具函数

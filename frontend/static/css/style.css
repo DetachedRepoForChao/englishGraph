@@ -369,3 +369,62 @@ body {
     padding: 4px 8px;
     font-weight: 600;
 }
+
+/* 知识层级样式 */
+.hierarchy-container {
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.hierarchy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.hierarchy-stats {
+    display: flex;
+    gap: 8px;
+}
+
+.hierarchy-tree {
+    padding: 15px 0;
+}
+
+.tree-node {
+    margin-bottom: 8px;
+}
+
+.node-content {
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.node-content:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.node-children {
+    margin-top: 5px;
+    padding-left: 10px;
+    border-left: 2px solid #dee2e6;
+}
+
+.tree-node .fas {
+    color: #6c757d;
+}
+
+.tree-node .fa-folder {
+    color: #ffc107;
+}
+
+.tree-node .fa-file {
+    color: #17a2b8;
+}
