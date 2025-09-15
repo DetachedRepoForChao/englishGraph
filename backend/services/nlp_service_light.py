@@ -149,8 +149,12 @@ class NLPService:
                         result = session.run("MATCH (kp:KnowledgePoint) RETURN kp.id as id, kp.name as name")
                         for record in result:
                             kp_id_map[record["name"]] = record["id"]
+                        logger.info(f"成功获取知识点ID映射，共{len(kp_id_map)}个知识点")
+                else:
+                    logger.warning("数据库连接未建立，无法获取知识点ID映射")
             except Exception as e:
-                logger.warning(f"获取知识点ID映射失败: {e}")
+                logger.error(f"获取知识点ID映射失败: {e}")
+                # 即使获取ID映射失败，也继续处理，使用默认ID
             
             # 为每个知识点计算匹配分数
             suggestions = []
@@ -237,6 +241,7 @@ class NLPService:
                     
                     if total_score > 0.15:  # 提高阈值，减少误匹配
                         kp_id = kp_id_map.get(kp_name, f"kp_{kp_name.replace(' ', '_')}")
+                        logger.info(f"知识点 {kp_name} 匹配成功: 总分={total_score:.3f}, ID={kp_id}")
                         
                         # 生成更详细的推理信息
                         reasoning_parts = []
@@ -260,6 +265,8 @@ class NLPService:
                             "type_score": type_score
                         }
                         suggestions.append(suggestion)
+                    else:
+                        logger.debug(f"知识点 {kp_name} 分数不足: 总分={total_score:.3f} < 0.15")
             
             # 按置信度排序
             suggestions.sort(key=lambda x: x["confidence"], reverse=True)
