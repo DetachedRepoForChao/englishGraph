@@ -160,6 +160,14 @@ class NLPService:
             "数量表达": [
                 "how many", "how much", "books", "book", "there are five",
                 "可数名词", "不可数名词", "复数", "单数", "数量词"
+            ],
+            "疑问句": [
+                "question", "do you", "did you", "have you", "are you", "choose the correct",
+                "疑问句", "问句", "助动词", "疑问词", "语序"
+            ],
+            "条件句": [
+                "if", "unless", "when", "tomorrow", "will stay", "if it rains",
+                "条件句", "假设", "if从句", "主将从现"
             ]
         }
     
@@ -283,7 +291,7 @@ class NLPService:
                         suggestions.append(suggestion)
                     
                     # 如果增强库分析不达标，对于基础语法和重要时态仍然尝试基础算法
-                    elif kp_name in ["冠词", "代词", "连词", "介词", "一般过去时", "比较级和最高级", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达"] and kp_name in self.keyword_patterns:
+                    elif kp_name in ["冠词", "代词", "连词", "介词", "一般过去时", "比较级和最高级", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达", "疑问句", "条件句"] and kp_name in self.keyword_patterns:
                         # 继续使用基础算法
                         pass
                     else:
@@ -291,7 +299,7 @@ class NLPService:
                         continue
                 
                 # 对于不在增强库中的知识点，或者增强库分析不达标的基础语法，使用基础算法
-                if kp_name in self.keyword_patterns and (kp_name not in (self.enhanced_kb.knowledge_base.keys() if self.enhanced_kb else []) or kp_name in ["冠词", "代词", "连词", "介词", "一般过去时", "比较级和最高级", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达"]):
+                if kp_name in self.keyword_patterns and (kp_name not in (self.enhanced_kb.knowledge_base.keys() if self.enhanced_kb else []) or kp_name in ["冠词", "代词", "连词", "介词", "一般过去时", "比较级和最高级", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达", "疑问句", "条件句"]):
                     keyword_score, matched_keywords = self._keyword_matching_score(processed_text, kp_name)
                     linguistic_score = self._analyze_linguistic_features(question_stem, kp_name)
                     type_score = self._question_type_score(question_type, kp_name)
@@ -306,7 +314,7 @@ class NLPService:
                         else:
                             total_score = max(linguistic_score * 0.7, keyword_score * 0.8) + type_score * 0.1
                         threshold = 0.05  # 大幅降低阈值
-                    elif kp_name in ["冠词", "代词", "连词", "介词", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达"]:
+                    elif kp_name in ["冠词", "代词", "连词", "介词", "There be句型", "be动词", "第三人称单数", "词汇", "数量表达", "疑问句", "条件句"]:
                         # 对于基础语法，降低阈值并平衡权重
                         if linguistic_score > 0.8:
                             total_score = linguistic_score * 0.8 + keyword_score * 0.1 + type_score * 0.1
@@ -811,6 +819,36 @@ class NLPService:
             # 检查可数名词复数
             if re.search(r'(books?|apples?|cats?|dogs?)', stem_lower) and re.search(r'(five|six|seven|many)', stem_lower):
                 return 0.9
+            
+            return 0.0
+        
+        elif knowledge_point == "疑问句":
+            # 检查疑问句特征
+            if "choose the correct question" in stem_lower:
+                return 0.95  # 明显的疑问句题目
+            
+            # 检查疑问句结构
+            question_patterns = ["do you", "did you", "have you", "are you", "will you"]
+            if any(pattern in stem_lower for pattern in question_patterns):
+                return 0.9
+            
+            if "question" in stem_lower:
+                return 0.8
+            
+            return 0.0
+        
+        elif knowledge_point == "条件句":
+            # 检查条件句特征
+            if re.search(r'if\s+it\s+_+.*tomorrow', stem_lower):
+                return 0.95  # 明显的条件句
+            
+            # 检查if从句结构
+            if "if" in stem_lower and "will" in stem_lower:
+                return 0.9
+            
+            # 检查条件句时态搭配
+            if "if" in stem_lower and ("tomorrow" in stem_lower or "next" in stem_lower):
+                return 0.8
             
             return 0.0
         
