@@ -369,10 +369,17 @@ class NLPService:
             return 0.0
         
         elif knowledge_point == "现在完成时":
-            # 检查完成时标志
-            perfect_indicators = ["already", "yet", "just", "ever", "never", "since", "for"]
+            # 检查完成时标志，但排除倒装句的情况
+            perfect_indicators = ["already", "yet", "just", "since", "for"]
             if any(indicator in stem_lower for indicator in perfect_indicators):
                 return 0.9
+            
+            # 检查ever/never在完成时语境中的使用
+            if "ever" in stem_lower and ("have" in stem_lower or "has" in stem_lower):
+                return 0.9
+            if "never" in stem_lower and ("have" in stem_lower or "has" in stem_lower):
+                return 0.9
+            
             return 0.0
         
         elif knowledge_point == "被动语态":
@@ -434,7 +441,7 @@ class NLPService:
             # 检查倒装句标志词和结构
             inversion_indicators = ["never", "seldom", "rarely", "hardly", "scarcely", "barely", "no sooner", "not only", "not until", "only"]
             if any(indicator in stem_lower for indicator in inversion_indicators):
-                return 0.9
+                return 0.95  # 提高倒装句的优先级
             
             # 检查部分倒装结构 (助动词/情态动词/be动词 + 主语)
             partial_inversion_patterns = [
@@ -445,7 +452,7 @@ class NLPService:
             
             for pattern in partial_inversion_patterns:
                 if re.search(pattern, stem_lower):
-                    return 0.85
+                    return 0.9
             
             # 检查完全倒装结构 (地点/时间副词 + 动词 + 主语)
             full_inversion_patterns = [
@@ -455,7 +462,7 @@ class NLPService:
             
             for pattern in full_inversion_patterns:
                 if re.search(pattern, stem_lower):
-                    return 0.8
+                    return 0.85
             
             return 0.0
         
