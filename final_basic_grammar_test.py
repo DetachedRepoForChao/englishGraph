@@ -6,7 +6,7 @@
 import requests
 import time
 
-API_BASE = "https://english-knowledge-graph-5s6qq3y2c-chao-wangs-projects-dfded257.vercel.app"
+API_BASE = "https://english-knowledge-graph-pjj0rbqjg-chao-wangs-projects-dfded257.vercel.app"
 
 def test_basic_grammar():
     """测试基础语法识别"""
