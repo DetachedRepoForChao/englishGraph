@@ -147,3 +147,41 @@ async def add_missing_knowledge_points():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"添加知识点失败: {str(e)}")
+
+
+@router.get("/debug-nlp")
+async def debug_nlp_service():
+    """调试NLP服务状态"""
+    try:
+        from backend.services.nlp_service_light import nlp_service
+        
+        # 检查数据库连接
+        db_connected = neo4j_service.driver is not None
+        if not db_connected:
+            db_connected = neo4j_service.connect()
+        
+        # 获取知识点ID映射
+        kp_id_map = {}
+        if db_connected and neo4j_service.driver:
+            with neo4j_service.driver.session() as session:
+                result = session.run("MATCH (kp:KnowledgePoint) RETURN kp.id as id, kp.name as name LIMIT 10")
+                kp_id_map = {record["name"]: record["id"] for record in result}
+        
+        # 测试NLP服务
+        test_question = "You must finish your homework before going out."
+        suggestions = nlp_service.suggest_knowledge_points(test_question, "选择题")
+        
+        return {
+            "database_connected": db_connected,
+            "knowledge_point_mapping": kp_id_map,
+            "test_question": test_question,
+            "suggestions_count": len(suggestions),
+            "suggestions": suggestions[:3] if suggestions else []
+        }
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
