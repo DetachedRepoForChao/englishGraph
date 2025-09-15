@@ -71,3 +71,79 @@ async def get_prerequisite_knowledge(kp_id: str):
         return {"prerequisites": prerequisites}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"查询失败: {str(e)}")
+
+
+@router.post("/add-missing-kps")
+async def add_missing_knowledge_points():
+    """添加缺失的知识点到数据库"""
+    try:
+        # 确保数据库连接
+        if not neo4j_service.driver:
+            neo4j_service.connect()
+        
+        with neo4j_service.driver.session() as session:
+            # 添加情态动词
+            session.run("""
+                MERGE (kp:KnowledgePoint {name: '情态动词'})
+                SET kp.id = 'kp_modal_verbs',
+                    kp.description = '情态动词表示说话人的态度、推测、能力、必要性等',
+                    kp.difficulty = 'medium',
+                    kp.grade_levels = ['初中二年级', '初中三年级', '高中一年级'],
+                    kp.learning_objectives = ['掌握情态动词的基本用法', '理解情态动词的推测用法']
+            """)
+            
+            # 添加倒装句
+            session.run("""
+                MERGE (kp:KnowledgePoint {name: '倒装句'})
+                SET kp.id = 'kp_inversion',
+                    kp.description = '倒装句是指将谓语动词或助动词提到主语之前的句子结构',
+                    kp.difficulty = 'hard',
+                    kp.grade_levels = ['高中一年级', '高中二年级', '高中三年级'],
+                    kp.learning_objectives = ['掌握部分倒装的结构', '理解完全倒装的使用场景']
+            """)
+            
+            # 添加虚拟语气
+            session.run("""
+                MERGE (kp:KnowledgePoint {name: '虚拟语气'})
+                SET kp.id = 'kp_subjunctive',
+                    kp.description = '虚拟语气表示假设、愿望、建议等非真实的情况',
+                    kp.difficulty = 'hard',
+                    kp.grade_levels = ['高中一年级', '高中二年级', '高中三年级'],
+                    kp.learning_objectives = ['掌握虚拟语气的基本形式', '理解虚拟语气的使用场景']
+            """)
+            
+            # 建立层级关系
+            session.run("""
+                MATCH (parent:KnowledgePoint {name: '英语语法'})
+                MATCH (child:KnowledgePoint {name: '情态动词'})
+                MERGE (parent)-[:HAS_SUB_POINT]->(child)
+            """)
+            
+            session.run("""
+                MATCH (parent:KnowledgePoint {name: '英语语法'})
+                MATCH (child:KnowledgePoint {name: '倒装句'})
+                MERGE (parent)-[:HAS_SUB_POINT]->(child)
+            """)
+            
+            session.run("""
+                MATCH (parent:KnowledgePoint {name: '英语语法'})
+                MATCH (child:KnowledgePoint {name: '虚拟语气'})
+                MERGE (parent)-[:HAS_SUB_POINT]->(child)
+            """)
+            
+            # 验证添加结果
+            result = session.run("""
+                MATCH (kp:KnowledgePoint) 
+                WHERE kp.name IN ['情态动词', '倒装句', '虚拟语气']
+                RETURN kp.name as name, kp.id as id
+                ORDER BY kp.name
+            """)
+            added = list(result)
+            
+        return {
+            "message": "成功添加缺失的知识点",
+            "added_knowledge_points": [dict(record) for record in added]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"添加知识点失败: {str(e)}")
